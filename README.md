@@ -3,7 +3,7 @@
 * Nicholas D. Pastiu - yikkN
 * Karrin Frida Novero - Rin1803
 * Dwayne Umali - RDwayneUmali
-* Jacob Shen Riesgo - 
+* Jacob Shen Riesgo - JacobShenRiesgo
 
 
 # Project Structure Overview
