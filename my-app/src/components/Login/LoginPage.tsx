@@ -60,7 +60,12 @@ const LoginPage: React.FC = () => {
     return (
         <div className="login-container">
             <div className="login-card">
-                <h2 className="login-title">Student Login</h2>
+                <img
+                    src="/images/logo.png"
+                    alt="Login Logo"
+                    className="login-logo"
+                />
+
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label htmlFor="email" className="form-label">Email Address</label>
@@ -71,7 +76,7 @@ const LoginPage: React.FC = () => {
                             value={email}
                             onChange={handleEmailChange}
                             onBlur={handleBlur}
-                            placeholder="username"
+                            placeholder="Enter your Mapua Email Address"
                             required
                         />
                         {emailError && <div className="error-message">{emailError}</div>}
@@ -91,12 +96,11 @@ const LoginPage: React.FC = () => {
                     </div>
 
                     <button type="submit" className="submit-button">
-                        Sign In
+                        Login
                     </button>
                 </form>
             </div>
         </div>
     );
 };
-
 export default LoginPage;
