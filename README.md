@@ -18,7 +18,7 @@ This project is a React-based web application initialized with Vite, using Supab
   - `usertesting_securitylogin.md`: Detailed guide on user testing, Supabase integration, and security features.
 
 ### `my-app` (Frontend Application)
-This is the main React application directory.
+This is the main directory for the React application.
 - **package.json**: Manages project dependencies (React, Supabase client, etc.) and scripts (`npm run dev`).
 - **vite.config.ts**: Configuration for the Vite build tool.
 - **.gitignore**: Specifies which files Git should ignore (e.g., `node_modules`, `.env`).
