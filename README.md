@@ -32,3 +32,6 @@ This is the main directory for the React application.
     - `LoginPage.tsx`: The UI and logic for the login form, including validation and Supabase interaction.
     - `Login.css`: Dedicated styling for the login page.
     - `supabaseClient.ts`: Configuration file for the Supabase client connection.
+  - **Dashboard/**: Self-contained Dashboard module.
+    - `Dashboard.tsx`: The main dashboard view.
+    - `Dashboard.css`: Styling for the dashboard.
