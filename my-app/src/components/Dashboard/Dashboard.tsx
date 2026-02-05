@@ -1,6 +1,12 @@
 import "./Dashboard.css";
+import { supabase } from "../../supabaseClient";
 
 const Dashboard = () => {
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) console.log("Error logging out:", error.message);
+  };
+
   return (
     <div className="app">
       <div className="topbar">Dashboard</div>
@@ -24,7 +30,7 @@ const Dashboard = () => {
 
           <div className="spacer" />
 
-          <div className="signout">Sign Out</div>
+          <div className="signout" onClick={handleLogout} style={{ cursor: "pointer" }}>Sign Out</div>
         </aside>
 
         <main className="main">
