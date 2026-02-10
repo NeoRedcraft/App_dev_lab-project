@@ -1,9 +1,9 @@
-import "./Dashboard.css";
+import "./Edition.css";
 import { supabase } from "../../supabaseClient";
 import { NavLink } from "react-router-dom";
 
 
-const Dashboard = () => {
+const Editions = () => {
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.log("Error logging out:", error.message);
@@ -21,25 +21,25 @@ const Dashboard = () => {
             />
           </div>
 
-          <nav className="nav">
+           <nav className="nav">
             <NavLink to="/dashboard" className={({ isActive }) => (isActive ? "active" : "")}>
-              <span className="nav-ic">🏠</span>
-              <span>Dashboard</span>
+                <span className="nav-ic">🏠</span>
+                <span>Dashboard</span>
             </NavLink>
 
             <NavLink to="/program-course" className={({ isActive }) => (isActive ? "active" : "")}>
-              <span className="nav-ic">⭐</span>
-              <span>Program & Course view</span>
+                <span className="nav-ic">⭐</span>
+                <span>Program & Course view</span>
             </NavLink>
 
             <NavLink to="/editions" className={({ isActive }) => (isActive ? "active" : "")}>
-              <span className="nav-ic">📖</span>
-              <span>Editions</span>
+                <span className="nav-ic">📖</span>
+                <span>Editions</span>
             </NavLink>
 
             <NavLink to="/report-summary" className={({ isActive }) => (isActive ? "active" : "")}>
-              <span className="nav-ic">📄</span>
-              <span>Report Summary</span>
+                <span className="nav-ic">📄</span>
+                <span>Report Summary</span>
             </NavLink>
           </nav>
 
@@ -65,13 +65,7 @@ const Dashboard = () => {
           </div>
 
           <section className="panel">
-            <div className="panel-title">Book Info</div>
-
-            <div className="cards">
-              <div className="card stat-box" />
-              <div className="card stat-box" />
-              <div className="card stat-box" />
-            </div>
+            <div className="panel-title">Editions</div>
           </section>
         </main>
       </div>
@@ -79,4 +73,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default Editions;
