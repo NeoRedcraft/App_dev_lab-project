@@ -9,34 +9,51 @@ const Dashboard = () => {
 
   return (
     <div className="app">
-      <div className="topbar">Dashboard</div>
-
       <div className="layout">
         <aside className="sidebar">
           <div className="brand">
-            <div className="logo" />
-            <div>
-              <div className="name">Library</div>
-              <div className="sub">Dashboard</div>
-            </div>
+            <img
+              className="logo"
+              src="/images/logo.png"
+              alt="Mapúa"
+            />
           </div>
 
-          <nav className="nav">
-            <a className="active" href="#">Dashboard</a>
-            <a href="#">Program & Course View</a>
-            <a href="#">Editions</a>
-            <a href="#">Report Summary</a>
+           <nav className="nav">
+            <a className="active" href="#">
+              <span className="nav-ic">🏠</span>
+              <span>Dashboard</span>
+            </a>
+
+            <a href="#">
+              <span className="nav-ic">⭐</span>
+              <span>Program & Course view</span>
+            </a>
+
+            <a href="#">
+              <span className="nav-ic">📖</span>
+              <span>Editions</span>
+            </a>
+
+            <a href="#">
+              <span className="nav-ic">📄</span>
+              <span>Report Summary</span>
+            </a>
           </nav>
 
           <div className="spacer" />
-
-          <div className="signout" onClick={handleLogout} style={{ cursor: "pointer" }}>Sign Out</div>
+            <button className="signout-btn" onClick={handleLogout}>
+              <span className="nav-ic">↩</span>
+              <span>Sign Out</span>
+            </button>        
         </aside>
 
         <main className="main">
           <div className="main-header">
             <div className="search">
+              <span className="search-ic">≡</span>
               <input type="text" placeholder="Search Here" />
+              <span className="search-ic">🔍</span>
             </div>
 
             <button className="log-btn">
@@ -49,9 +66,9 @@ const Dashboard = () => {
             <div className="panel-title">Book Info</div>
 
             <div className="cards">
-              <div className="card" />
-              <div className="card" />
-              <div className="card" />
+              <div className="card stat-box" />
+              <div className="card stat-box" />
+              <div className="card stat-box" />
             </div>
           </section>
         </main>
