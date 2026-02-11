@@ -191,27 +191,6 @@ body {
   margin-bottom: 12px;
 }
 
-.cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
-}
-
-.card {
-  background: #fff;
-  border-radius: 22px;
-  border: 1px solid #222;
-}
-
-.stat-box {
-  min-height: 260px;       
-  border: 1px solid #9a9a9a;
-  background: #ffffff;
-}
-
-.stat-box * {
-  outline: none;
-}
 
 /* RESPONSIVE */
 @media (max-width: 900px) {
