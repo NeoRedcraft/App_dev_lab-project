@@ -5,10 +5,12 @@ import Dashboard from './components/Dashboard/Dashboard';
 import Editions from "./components/Editions/Editions"; 
 import ProgramCourse from "./components/ProgramCourse/ProgramCourse"; 
 import ReportSummary from "./components/ReportSummary/ReportSummary"; 
+import BookEndcoding from "./components/BooksEncoding/BooksEncoding"; 
 
 import type { Session } from '@supabase/supabase-js';
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import BooksEncoding from './components/BooksEncoding/BooksEncoding';
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -39,6 +41,7 @@ function App() {
         <Route path="/program-course" element={<ProgramCourse />} />
         <Route path="/editions" element={<Editions />} />
         <Route path="/report-summary" element={<ReportSummary />} />
+        <Route path="/books-encoding" element={<BooksEncoding />} />
 
         {/* fallback */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

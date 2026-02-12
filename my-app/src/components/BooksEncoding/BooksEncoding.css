@@ -192,7 +192,6 @@ body {
 }
 
 
-/* RESPONSIVE */
 @media (max-width: 900px) {
   .layout {
     grid-template-columns: 180px 1fr;
@@ -203,99 +202,43 @@ body {
   }
 }
 
-.pc-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.pc-title {
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.pc-sort {
-  border: 1px solid #c9c9c9;
-  background: #f7f7f7;
-  border-radius: 10px;
-  padding: 6px 10px;
-  font-size: 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.pc-grid {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: 16px;
-  height: calc(100% - 40px);
-}
-
-.pc-left {
-  background: #ffffff;
-  border-radius: 16px;
-  border: 1px solid #bdbdbd;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.pc-label {
-  font-size: 13px;
-}
-
-.pc-selectWrap {
+.be-card {
+  height: 100%;
+  background: #fff;
+  border: 1.5px solid #222;
+  border-radius: 22px;
+  padding: 28px 34px;
   position: relative;
 }
 
-.pc-select {
+.be-field {
+  max-width: 520px;
+  margin-bottom: 18px;
+}
+
+.be-label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.be-input {
   width: 100%;
   height: 34px;
   border-radius: 999px;
-  border: 1px solid #bdbdbd;
-  padding: 0 38px 0 12px;
+  border: 1.5px solid #222;
+  padding: 0 14px;
   outline: none;
-  background: #fff;
-  appearance: none;
 }
 
-.pc-caret {
+.be-add {
   position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  opacity: 0.8;
-}
-
-.pc-subjectBox {
-  flex: 1;
-  border: 1px solid #bdbdbd;
-  border-radius: 18px;
+  right: 26px;
+  bottom: 22px;
+  height: 34px;
+  padding: 0 22px;
+  border-radius: 999px;
+  border: 1.5px solid #222;
   background: #fff;
-}
-
-.pc-right {
-  background: #ffffff;
-  border-radius: 16px;
-  border: 1px solid #bdbdbd;
-  padding: 10px;
-  overflow: auto;
-}
-
-.pc-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.pc-table thead th {
-  text-align: left;
-  padding: 8px 10px;
-  border-bottom: 1px solid #6f6f6f;
-  font-weight: 500;
+  cursor: pointer;
 }
