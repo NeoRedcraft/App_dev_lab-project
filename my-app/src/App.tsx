@@ -5,12 +5,11 @@ import Dashboard from './components/Dashboard/Dashboard';
 import Editions from "./components/Editions/Editions"; 
 import ProgramCourse from "./components/ProgramCourse/ProgramCourse"; 
 import ReportSummary from "./components/ReportSummary/ReportSummary"; 
-import BookEndcoding from "./components/BooksEncoding/BooksEncoding"; 
+import BooksEncoding from "./components/BooksEncoding/BooksEncoding"; 
 
 import type { Session } from '@supabase/supabase-js';
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import BooksEncoding from './components/BooksEncoding/BooksEncoding';
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
