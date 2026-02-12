@@ -1,9 +1,28 @@
 import "./Edition.css";
+import { useState, useMemo } from "react";
 import { supabase } from "../../supabaseClient";
-import { NavLink } from "react-router-dom";
-
+import { NavLink, useNavigate } from "react-router-dom";
 
 const Editions = () => {
+  const navigate = useNavigate();
+  const [editionYear, setEditionYear] = useState<number | "">("");
+
+  const CURRENT_YEAR = new Date().getFullYear();
+  const OUTDATED_AFTER_YEARS = 5;
+
+  const editionStatus = useMemo(() => {
+    if (editionYear === "") return "";
+    if (editionYear < 1500 || editionYear > CURRENT_YEAR) {
+      return "Invalid year";
+    }
+
+    const age = CURRENT_YEAR - editionYear;
+
+    return age >= OUTDATED_AFTER_YEARS
+      ? "Outdated"
+      : "Up-to-date";
+  }, [editionYear]);
+
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.log("Error logging out:", error.message);
@@ -55,7 +74,7 @@ const Editions = () => {
               <span className="search-ic">🔍</span>
             </div>
 
-            <button className="log-btn">
+            <button className="log-btn" onClick={() => navigate("/books-encoding")}>
               <span className="plus">+</span>
               Log New Book/s
             </button>
@@ -98,6 +117,25 @@ const Editions = () => {
               </div>
 
               <div className="pc-right">
+                <div style={{ marginBottom: "12px" }}>
+                  <input
+                    type="number"
+                    placeholder="Enter Edition Year (e.g. 2020)"
+                    value={editionYear}
+                    onChange={(e) =>
+                      setEditionYear(
+                        e.target.value === "" ? "" : Number(e.target.value)
+                      )
+                    }
+                    style={{
+                      padding: "8px",
+                      width: "220px",
+                      borderRadius: "6px",
+                      border: "1px solid #ccc",
+                    }}
+                  />
+                </div>
+
                 <table className="pc-table">
                   <thead>
                     <tr>
@@ -110,8 +148,6 @@ const Editions = () => {
                       <th style={{ width: 90 }}>Status</th>
                     </tr>
                   </thead>
-
-                  <tbody />
                 </table>
               </div>
             </div>
