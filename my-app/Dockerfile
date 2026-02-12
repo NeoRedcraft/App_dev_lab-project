@@ -14,7 +14,7 @@ RUN npm ci
 COPY . .
 
 # Expose Vite dev server port
-EXPOSE 5173
+EXPOSE 5174
 
 # Default command to start Vite
 CMD ["npm", "run", "dev"]
