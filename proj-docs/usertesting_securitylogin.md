@@ -24,6 +24,7 @@
     - Enter `student@gmail.com`.
     - Click "Sign In" or click out of the input.
     - Expected: Error message "Email must be a valid @mymail.mapua.edu.ph address".
+    
 
 ## Supabase Integration Guide
 
