@@ -134,6 +134,11 @@ const Editions = () => {
                       border: "1px solid #ccc",
                     }}
                   />
+                  {editionStatus && (
+                    <span style={{ marginLeft: "10px", fontWeight: "bold" }}>
+                      {editionStatus}
+                    </span>
+                  )}
                 </div>
 
                 <table className="pc-table">
