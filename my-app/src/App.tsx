@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { supabase } from './supabaseClient';
+import { supabase } from './database/client';
 import LoginPage from './components/Login/LoginPage';
 import Dashboard from './components/Dashboard/Dashboard';
-import Editions from "./components/Editions/Editions"; 
-import ProgramCourse from "./components/ProgramCourse/ProgramCourse"; 
-import ReportSummary from "./components/ReportSummary/ReportSummary"; 
-import BooksEncoding from "./components/BooksEncoding/BooksEncoding"; 
+import Editions from "./components/Editions/Editions";
+import ProgramCourse from "./components/ProgramCourse/ProgramCourse";
+import ReportSummary from "./components/ReportSummary/ReportSummary";
+import BooksEncoding from "./components/BooksEncoding/BooksEncoding";
 
 import type { Session } from '@supabase/supabase-js';
 
@@ -28,7 +28,7 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-    if (!session) return <LoginPage />;
+  if (!session) return <LoginPage />;
 
   return (
     <BrowserRouter>

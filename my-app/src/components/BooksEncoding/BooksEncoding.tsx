@@ -1,29 +1,61 @@
-import "./BooksEncoding.css";
 import { useState } from "react";
-import { supabase } from "../../supabaseClient";
+import "./BooksEncoding.css";
+import { supabase } from "../../database/client";
 import { NavLink, useNavigate } from "react-router-dom";
 
 const BooksEncoding = () => {
   const navigate = useNavigate();
-
-  // Form state (UI only)
-  const [title, setTitle] = useState("");
-  const [author, setAuthor] = useState("");
-  const [department, setDepartment] = useState("");
-  const [program, setProgram] = useState("");
-  const [courseCode, setCourseCode] = useState("");
-  const [publisher, setPublisher] = useState("");
-  const [year, setYear] = useState("");
-  const [edition, setEdition] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    author: "",
+    department: "",
+    program: "",
+    course_code: "",
+    publisher: "",
+    year: "",
+    edition: "",
+  });
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.log("Error logging out:", error.message);
   };
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Added (UI only for now)");
+    setLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from('books')
+        .insert([formData]);
+
+      if (error) throw error;
+
+      alert("Book added successfully!");
+      setFormData({
+        title: "",
+        author: "",
+        department: "",
+        program: "",
+        course_code: "",
+        publisher: "",
+        year: "",
+        edition: "",
+      });
+    } catch (error: any) {
+      alert("Error adding book: " + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -100,8 +132,10 @@ const BooksEncoding = () => {
                 <input
                   className="be-input"
                   type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  required
                 />
               </div>
 
@@ -110,8 +144,10 @@ const BooksEncoding = () => {
                 <input
                   className="be-input"
                   type="text"
-                  value={author}
-                  onChange={(e) => setAuthor(e.target.value)}
+                  name="author"
+                  value={formData.author}
+                  onChange={handleChange}
+                  required
                 />
               </div>
 
@@ -121,8 +157,10 @@ const BooksEncoding = () => {
                 <input
                   className="be-input"
                   type="text"
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
+                  name="department"
+                  value={formData.department}
+                  onChange={handleChange}
+                  required
                 />
               </div>
 
@@ -132,8 +170,10 @@ const BooksEncoding = () => {
                 <input
                   className="be-input"
                   type="text"
-                  value={program}
-                  onChange={(e) => setProgram(e.target.value)}
+                  name="program"
+                  value={formData.program}
+                  onChange={handleChange}
+                  required
                 />
               </div>
 
@@ -142,8 +182,10 @@ const BooksEncoding = () => {
                 <input
                   className="be-input"
                   type="text"
-                  value={courseCode}
-                  onChange={(e) => setCourseCode(e.target.value)}
+                  name="course_code"
+                  value={formData.course_code}
+                  onChange={handleChange}
+                  required
                 />
               </div>
 
@@ -152,8 +194,10 @@ const BooksEncoding = () => {
                 <input
                   className="be-input"
                   type="text"
-                  value={publisher}
-                  onChange={(e) => setPublisher(e.target.value)}
+                  name="publisher"
+                  value={formData.publisher}
+                  onChange={handleChange}
+                  required
                 />
               </div>
 
@@ -162,8 +206,10 @@ const BooksEncoding = () => {
                 <input
                   className="be-input"
                   type="text"
-                  value={year}
-                  onChange={(e) => setYear(e.target.value)}
+                  name="year"
+                  value={formData.year}
+                  onChange={handleChange}
+                  required
                 />
               </div>
 
@@ -172,13 +218,15 @@ const BooksEncoding = () => {
                 <input
                   className="be-input"
                   type="text"
-                  value={edition}
-                  onChange={(e) => setEdition(e.target.value)}
+                  name="edition"
+                  value={formData.edition}
+                  onChange={handleChange}
+                  required
                 />
               </div>
 
-              <button className="be-add" type="submit">
-                Add
+              <button className="be-add" type="submit" disabled={loading}>
+                {loading ? "Adding..." : "Add"}
               </button>
             </form>
           </section>

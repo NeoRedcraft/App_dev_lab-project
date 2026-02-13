@@ -1,5 +1,5 @@
 import "./Dashboard.css";
-import { supabase } from "../../supabaseClient";
+import { supabase } from "../../database/client";
 import { NavLink, useNavigate } from "react-router-dom";
 
 

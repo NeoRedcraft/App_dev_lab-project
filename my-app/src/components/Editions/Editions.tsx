@@ -1,6 +1,6 @@
 import "./Edition.css";
 import { useState, useMemo } from "react";
-import { supabase } from "../../supabaseClient";
+import { supabase } from "../../database/client";
 import { NavLink, useNavigate } from "react-router-dom";
 
 const Editions = () => {

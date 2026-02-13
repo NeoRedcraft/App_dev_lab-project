@@ -1,5 +1,5 @@
 import "./ReportSummary.css";
-import { supabase } from "../../supabaseClient";
+import { supabase } from "../../database/client";
 import { NavLink, useNavigate } from "react-router-dom";
 
 
@@ -22,33 +22,33 @@ const Editions = () => {
             />
           </div>
 
-           <nav className="nav">
+          <nav className="nav">
             <NavLink to="/dashboard" className={({ isActive }) => (isActive ? "active" : "")}>
-                <span className="nav-ic">🏠</span>
-                <span>Dashboard</span>
+              <span className="nav-ic">🏠</span>
+              <span>Dashboard</span>
             </NavLink>
 
             <NavLink to="/program-course" className={({ isActive }) => (isActive ? "active" : "")}>
-                <span className="nav-ic">⭐</span>
-                <span>Program & Course view</span>
+              <span className="nav-ic">⭐</span>
+              <span>Program & Course view</span>
             </NavLink>
 
             <NavLink to="/editions" className={({ isActive }) => (isActive ? "active" : "")}>
-                <span className="nav-ic">📖</span>
-                <span>Editions</span>
+              <span className="nav-ic">📖</span>
+              <span>Editions</span>
             </NavLink>
 
             <NavLink to="/report-summary" className={({ isActive }) => (isActive ? "active" : "")}>
-                <span className="nav-ic">📄</span>
-                <span>Report Summary</span>
+              <span className="nav-ic">📄</span>
+              <span>Report Summary</span>
             </NavLink>
           </nav>
 
           <div className="spacer" />
-            <button className="signout-btn" onClick={handleLogout}>
-              <span className="nav-ic">↩</span>
-              <span>Sign Out</span>
-            </button>        
+          <button className="signout-btn" onClick={handleLogout}>
+            <span className="nav-ic">↩</span>
+            <span>Sign Out</span>
+          </button>
         </aside>
 
         <main className="main">
