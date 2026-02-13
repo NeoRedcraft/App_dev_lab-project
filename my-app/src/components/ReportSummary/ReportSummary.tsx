@@ -1,9 +1,10 @@
 import "./ReportSummary.css";
 import { supabase } from "../../database/client";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 
 const Editions = () => {
+    const navigate = useNavigate();   
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.log("Error logging out:", error.message);
@@ -58,7 +59,7 @@ const Editions = () => {
               <span className="search-ic">🔍</span>
             </div>
 
-            <button className="log-btn">
+            <button className="log-btn" onClick={() => navigate("/books-encoding")}>
               <span className="plus">+</span>
               Log New Book/s
             </button>

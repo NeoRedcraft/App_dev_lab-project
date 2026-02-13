@@ -9,6 +9,8 @@ const BooksEncoding = () => {
   const [formData, setFormData] = useState({
     title: "",
     author: "",
+    department: "",
+    program: "",
     course_code: "",
     publisher: "",
     year: "",
@@ -42,6 +44,8 @@ const BooksEncoding = () => {
       setFormData({
         title: "",
         author: "",
+        department: "",
+        program: "",
         course_code: "",
         publisher: "",
         year: "",
@@ -57,6 +61,7 @@ const BooksEncoding = () => {
   return (
     <div className="app">
       <div className="layout">
+        {/* SIDEBAR */}
         <aside className="sidebar">
           <div className="brand">
             <img className="logo" src="/images/logo.png" alt="Mapúa" />
@@ -104,6 +109,7 @@ const BooksEncoding = () => {
           </button>
         </aside>
 
+        {/* MAIN */}
         <main className="main">
           <div className="main-header">
             <div className="search">
@@ -118,6 +124,7 @@ const BooksEncoding = () => {
             </button>
           </div>
 
+          {/* FORM */}
           <section className="panel">
             <form className="be-card" onSubmit={handleAdd}>
               <div className="be-field">
@@ -139,6 +146,32 @@ const BooksEncoding = () => {
                   type="text"
                   name="author"
                   value={formData.author}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              {/* ✅ NEW FIELD */}
+              <div className="be-field">
+                <label className="be-label">Department</label>
+                <input
+                  className="be-input"
+                  type="text"
+                  name="department"
+                  value={formData.department}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              {/* ✅ NEW FIELD */}
+              <div className="be-field">
+                <label className="be-label">Program</label>
+                <input
+                  className="be-input"
+                  type="text"
+                  name="program"
+                  value={formData.program}
                   onChange={handleChange}
                   required
                 />
