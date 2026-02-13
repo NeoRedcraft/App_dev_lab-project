@@ -1,9 +1,10 @@
 import "./Dashboard.css";
-import { supabase } from "../../supabaseClient";
-import { NavLink } from "react-router-dom";
+import { supabase } from "../../database/client";
+import { NavLink, useNavigate } from "react-router-dom";
 
 
 const Dashboard = () => {
+  const navigate = useNavigate();   
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.log("Error logging out:", error.message);
@@ -58,10 +59,11 @@ const Dashboard = () => {
               <span className="search-ic">🔍</span>
             </div>
 
-            <button className="log-btn">
+            <button className="log-btn" onClick={() => navigate("/books-encoding")}>
               <span className="plus">+</span>
               Log New Book/s
             </button>
+
           </div>
 
           <section className="panel">
