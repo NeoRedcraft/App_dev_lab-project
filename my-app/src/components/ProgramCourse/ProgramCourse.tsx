@@ -1,5 +1,5 @@
 import "./ProgramCourse.css";
-import { supabase } from "../../supabaseClient";
+import { supabase } from "../../database/client";
 import { NavLink } from "react-router-dom";
 
 const ProgramCourse = () => {
