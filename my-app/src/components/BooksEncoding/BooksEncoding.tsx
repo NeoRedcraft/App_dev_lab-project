@@ -1,21 +1,46 @@
-import { useState } from "react";
 import "./BooksEncoding.css";
 import { supabase } from "../../database/client";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 
 const BooksEncoding = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const [formData, setFormData] = useState({
-    title: "",
-    author: "",
-    department: "",
-    program: "",
-    course_code: "",
-    publisher: "",
-    year: "",
-    edition: "",
+    Title: "",
+    Author: "",
+    Department: "",
+    Program: "",
+    Course_code: "",
+    Publisher: "",
+    Year: "",
+    Edition: "",
   });
+
+  const closeAndReturn = () => {
+    const from = (location.state as any)?.from;
+    setIsModalOpen(false);
+    if (from) navigate(from, { replace: true });
+  };
+
+  useEffect(() => {
+    if ((location.state as any)?.openModal) {
+      setIsModalOpen(true);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeAndReturn();
+    };
+    if (isModalOpen) window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isModalOpen]);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -23,10 +48,7 @@ const BooksEncoding = () => {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -34,23 +56,22 @@ const BooksEncoding = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase
-        .from('books')
-        .insert([formData]);
-
+      const { error } = await supabase.from("books").insert([formData]);
       if (error) throw error;
 
       alert("Book added successfully!");
       setFormData({
-        title: "",
-        author: "",
-        department: "",
-        program: "",
-        course_code: "",
-        publisher: "",
-        year: "",
-        edition: "",
+        Title: "",
+        Author: "",
+        Department: "",
+        Program: "",
+        Course_code: "",
+        Publisher: "",
+        Year: "",
+        Edition: "",
       });
+
+      closeAndReturn();
     } catch (error: any) {
       alert("Error adding book: " + error.message);
     } finally {
@@ -59,179 +80,92 @@ const BooksEncoding = () => {
   };
 
   return (
-    <div className="app">
-      <div className="layout">
+    <div className="pc-page">
+      {/* TOP BAR */}
+      <header className="pc-topbar">
+        <img className="pc-toplogo" src="/images/logo2.webp" alt="MAPUA LIBRARY" />
+      </header>
+
+      <div className="pc-body">
         {/* SIDEBAR */}
-        <aside className="sidebar">
-          <div className="brand">
-            <img className="logo" src="/images/logo.png" alt="Mapúa" />
-          </div>
-
-          <nav className="nav">
-            <NavLink
-              to="/dashboard"
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
-              <span className="nav-ic">🏠</span>
-              <span>Dashboard</span>
+        <aside className="pc-sidebar">
+          <nav className="pc-nav">
+            <NavLink to="/dashboard">Dashboard</NavLink>
+            <NavLink to="/program-course">
+              Program & <br /> Course view
             </NavLink>
-
-            <NavLink
-              to="/program-course"
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
-              <span className="nav-ic">⭐</span>
-              <span>Program & Course view</span>
-            </NavLink>
-
-            <NavLink
-              to="/editions"
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
-              <span className="nav-ic">📖</span>
-              <span>Editions</span>
-            </NavLink>
-
-            <NavLink
-              to="/report-summary"
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
-              <span className="nav-ic">📄</span>
-              <span>Report Summary</span>
+            <NavLink to="/editions">Editions</NavLink>
+            <NavLink to="/report-summary">
+              Report <br /> Summary
             </NavLink>
           </nav>
 
-          <div className="spacer" />
-
-          <button className="signout-btn" onClick={handleLogout}>
-            <span className="nav-ic">↩</span>
-            <span>Sign Out</span>
+          <button className="pc-signout" onClick={handleLogout}>
+            ↩ Sign Out
           </button>
         </aside>
 
         {/* MAIN */}
-        <main className="main">
-          <div className="main-header">
-            <div className="search">
-              <span className="search-ic">≡</span>
-              <input type="text" placeholder="Search Here" />
-              <span className="search-ic">🔍</span>
-            </div>
+        <main className="pc-main">
+          <div className="pc-main-head">
+            <h1 className="pc-title">Books Encoding</h1>
 
-            <button className="log-btn" onClick={() => navigate("/dashboard")}>
-              <span className="plus">+</span>
-              Log New Book/s
-            </button>
+            <div className="pc-head-right">
+              <div className="pc-search">
+                <input type="text" placeholder="Search Here" />
+                <span className="pc-search-ic">🔍</span>
+              </div>
+
+              <button className="pc-logbtn" onClick={() => setIsModalOpen(true)}>
+                Log New Book/s
+              </button>
+            </div>
           </div>
 
-          {/* FORM */}
-          <section className="panel">
-            <form className="be-card" onSubmit={handleAdd}>
-              <div className="be-field">
-                <label className="be-label">Title</label>
-                <input
-                  className="be-input"
-                  type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="be-field">
-                <label className="be-label">Author</label>
-                <input
-                  className="be-input"
-                  type="text"
-                  name="author"
-                  value={formData.author}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              {/* ✅ NEW FIELD */}
-              <div className="be-field">
-                <label className="be-label">Department</label>
-                <input
-                  className="be-input"
-                  type="text"
-                  name="department"
-                  value={formData.department}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              {/* ✅ NEW FIELD */}
-              <div className="be-field">
-                <label className="be-label">Program</label>
-                <input
-                  className="be-input"
-                  type="text"
-                  name="program"
-                  value={formData.program}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="be-field">
-                <label className="be-label">Course Code</label>
-                <input
-                  className="be-input"
-                  type="text"
-                  name="course_code"
-                  value={formData.course_code}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="be-field">
-                <label className="be-label">Publisher</label>
-                <input
-                  className="be-input"
-                  type="text"
-                  name="publisher"
-                  value={formData.publisher}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="be-field">
-                <label className="be-label">Year</label>
-                <input
-                  className="be-input"
-                  type="text"
-                  name="year"
-                  value={formData.year}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="be-field">
-                <label className="be-label">Edition</label>
-                <input
-                  className="be-input"
-                  type="text"
-                  name="edition"
-                  value={formData.edition}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <button className="be-add" type="submit" disabled={loading}>
-                {loading ? "Adding..." : "Add"}
-              </button>
-            </form>
-          </section>
+          <section className="pc-rightCard" />
         </main>
       </div>
+
+      {/* MODAL */}
+      {isModalOpen && (
+        <div className="be-overlay" onClick={closeAndReturn}>
+          <div className="be-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="be-close" onClick={closeAndReturn}>
+              x
+            </button>
+
+            <h2 className="be-title-modal">Book Encoding</h2>
+
+            <form className="be-form-modal" onSubmit={handleAdd}>
+              {[
+                ["Title", "Book Title"],
+                ["Author", "Author"],
+                ["Department", "Department"],
+                ["Program", "Program"],
+                ["Course_code", "Course Code"],
+                ["Publisher", "Publisher"],
+                ["Year", "Year"],
+                ["Edition", "Edition"],
+              ].map(([name, label]) => (
+                <div key={name}>
+                  <label className="be-label-modal">{label}</label>
+                  <input
+                    className="be-input-modal"
+                    name={name}
+                    value={(formData as any)[name]}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              ))}
+
+              <button className="be-submit-modal" type="submit" disabled={loading}>
+                {loading ? "Logging..." : "Log Books"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

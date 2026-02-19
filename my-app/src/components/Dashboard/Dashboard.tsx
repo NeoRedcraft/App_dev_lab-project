@@ -1,80 +1,73 @@
 import "./Dashboard.css";
 import { supabase } from "../../database/client";
-import { NavLink, useNavigate } from "react-router-dom";
-
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 
 const Dashboard = () => {
-  const navigate = useNavigate();   
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.log("Error logging out:", error.message);
   };
 
   return (
-    <div className="app">
-      <div className="layout">
-        <aside className="sidebar">
-          <div className="brand">
-            <img
-              className="logo"
-              src="/images/logo.png"
-              alt="Mapúa"
-            />
-          </div>
+    <div className="dash-page">
+      <header className="dash-topbar">
+        <img className="dash-toplogo" src="/images/logo2.webp" alt="MAPUA LIBRARY" />
+      </header>
 
-          <nav className="nav">
+      <div className="dash-body">
+        <aside className="dash-sidebar">
+          <nav className="dash-nav">
             <NavLink to="/dashboard" className={({ isActive }) => (isActive ? "active" : "")}>
-              <span className="nav-ic">🏠</span>
-              <span>Dashboard</span>
+              Dashboard
             </NavLink>
 
             <NavLink to="/program-course" className={({ isActive }) => (isActive ? "active" : "")}>
-              <span className="nav-ic">⭐</span>
-              <span>Program & Course view</span>
+              Program &amp; <br />
+              Course view
             </NavLink>
 
             <NavLink to="/editions" className={({ isActive }) => (isActive ? "active" : "")}>
-              <span className="nav-ic">📖</span>
-              <span>Editions</span>
+              Editions
             </NavLink>
 
             <NavLink to="/report-summary" className={({ isActive }) => (isActive ? "active" : "")}>
-              <span className="nav-ic">📄</span>
-              <span>Report Summary</span>
+              Report <br />
+              Summary
             </NavLink>
           </nav>
 
-          <div className="spacer" />
-            <button className="signout-btn" onClick={handleLogout}>
-              <span className="nav-ic">↩</span>
-              <span>Sign Out</span>
-            </button>        
+          <button className="dash-signout" onClick={handleLogout}>
+            ↩ Sign Out
+          </button>
         </aside>
 
-        <main className="main">
-          <div className="main-header">
-            <div className="search">
-              <span className="search-ic">≡</span>
-              <input type="text" placeholder="Search Here" />
-              <span className="search-ic">🔍</span>
+        <main className="dash-main">
+          <div className="dash-main-head">
+            <h1 className="dash-title">Dashboard Summary</h1>
+
+            <div className="dash-search">
+              <input type="text" placeholder="Search Book" />
+              <span className="dash-search-ic">🔍</span>
             </div>
-
-            <button className="log-btn" onClick={() => navigate("/books-encoding")}>
-              <span className="plus">+</span>
-              Log New Book/s
-            </button>
-
           </div>
 
-          <section className="panel">
-            <div className="panel-title">Book Info</div>
-
-            <div className="cards">
-              <div className="card stat-box" />
-              <div className="card stat-box" />
-              <div className="card stat-box" />
-            </div>
-          </section>
+          <div className="dash-actions">
+            <button
+              type="button"
+              className="dash-logbtn"
+              onClick={() =>
+                navigate("/books-encoding", {
+                  state: { openModal: true, from: location.pathname },
+                })
+              }
+            >
+              + Log New Book/s
+            </button>
+          </div>
+          <section className="dash-canvas" />
         </main>
       </div>
     </div>
