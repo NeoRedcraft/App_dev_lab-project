@@ -72,7 +72,6 @@ body {
   color: #e9a015;
   background: #ffffff;
   font-weight: 600;
-
   position: relative;
   z-index: 20;
   margin-right: -5px;
@@ -171,7 +170,8 @@ body {
   opacity: 0.85;
 }
 
-.pc-logbtn {
+.pc-logbtn,
+.pc-printbtn {
   height: 34px;
   padding: 0 14px;
   border-radius: 10px;
@@ -181,8 +181,14 @@ body {
   font-size: 12px;
 }
 
-.pc-logbtn:hover {
+.pc-logbtn:hover,
+.pc-printbtn:hover {
   background: #f4f4f4;
+}
+
+.pc-printbtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .pc-grid {
@@ -191,7 +197,7 @@ body {
   grid-template-columns: 240px 1fr;
   gap: 22px;
   min-height: 0;
-  height: 800px; 
+  height: calc(100vh - 170px);
 }
 
 .pc-leftCard {
@@ -202,6 +208,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-height: 0;
 }
 
 .pc-label {
@@ -211,7 +218,6 @@ body {
 
 .pc-selectWrap {
   position: relative;
-
 }
 
 .pc-select {
@@ -236,14 +242,51 @@ body {
 
 .pc-bigBox {
   flex: 1;
-  height: 300px; /* adjust */
   border: 2px solid #d6d6d6;
   border-radius: 8px;
   background: #ffffff;
   margin-top: 10px;
+  overflow: auto;
 }
 
-/* RIGHT CARD */
+.pc-boxMsg {
+  padding: 12px;
+  font-size: 13px;
+}
+
+.pc-boxHint {
+  color: #666;
+}
+
+.pc-boxLoading {
+  color: #111;
+}
+
+.pc-boxEmpty {
+  color: #111;
+}
+
+.pc-codeList {
+  margin: 0;
+  padding: 12px;
+  list-style: none;
+}
+
+.pc-codeItem {
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 6px;
+  border: 1px solid #eee;
+  background: #fff;
+  font-weight: 400;
+}
+
+.pc-codeItem.active {
+  background: #f4f4f4;
+  font-weight: 600;
+}
+
 .pc-rightCard {
   border: 2px solid #d6d6d6;
   border-radius: 8px;
@@ -253,7 +296,6 @@ body {
   flex-direction: column;
 }
 
-/* top of table */
 .pc-tableTop {
   display: flex;
   align-items: center;
@@ -283,7 +325,6 @@ body {
   flex: 1;
 }
 
-/* table */
 .pc-table {
   width: 100%;
   border-collapse: collapse;
@@ -296,9 +337,33 @@ body {
   border-bottom: 1px solid #bdbdbd;
   font-weight: 500;
 }
+
 .pc-table tbody td {
+  padding: 10px 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.pc-center {
   text-align: center;
-  padding: 8px 10px;
+}
+
+.pc-rowMsg {
+  padding: 16px;
+  text-align: center;
+  color: #666;
+}
+
+.pc-editbtn {
+  border: none;
+  background: transparent;
+  color: #111;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 12px;
+}
+
+.pc-editbtn:hover {
+  opacity: 0.75;
 }
 
 @media (max-width: 900px) {
@@ -312,5 +377,6 @@ body {
 
   .pc-grid {
     grid-template-columns: 1fr;
+    height: auto;
   }
 }

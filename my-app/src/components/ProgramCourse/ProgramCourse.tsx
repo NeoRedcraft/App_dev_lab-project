@@ -2,18 +2,64 @@ import "./ProgramCourse.css";
 import { supabase } from "../../database/client";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
+import { buildCoursePrintHtml } from "./coursePrintTemplate";
 
-type BookRow = {
-  id: number;
-  Title: string | null;
-  Author: string | null;
-  Publisher: string | null;
-  Year: string | null;
-  Edition: string | null;
-  Department: string | null;
-  Program: string | null;
-  Course_code: string | null;
+export type ViewRow = {
+  department: string | null;
+  program: string | null;
+  course_code: string | null;
+  course_title: string | null;
+
+  book_id: number;
+  acc_no: string | null;
+  call_no: string | null;
+  title: string | null;
+  author: string | null;
+  publisher: string | null;
+  copyright_year: number | null;
+  num_vols: number | null;
+  apa_citation: string | null;
 };
+
+function uniqSorted(values: Array<string | null | undefined>) {
+  const set = new Set<string>();
+  for (const v of values) {
+    const s = (v ?? "").toString().trim();
+    if (s) set.add(s);
+  }
+  return Array.from(set).sort((a, b) => a.localeCompare(b));
+}
+
+function SelectField(props: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  disabled?: boolean;
+  placeholder: string;
+}) {
+  return (
+    <>
+      <label className="pc-label">{props.label}</label>
+      <div className="pc-selectWrap">
+        <select
+          className="pc-select"
+          value={props.value}
+          onChange={(e) => props.onChange(e.target.value)}
+          disabled={props.disabled}
+        >
+          <option value="">{props.placeholder}</option>
+          {props.options.map((o) => (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          ))}
+        </select>
+        <span className="pc-caret">⌄</span>
+      </div>
+    </>
+  );
+}
 
 const ProgramCourse = () => {
   const navigate = useNavigate();
@@ -30,104 +76,185 @@ const ProgramCourse = () => {
   const [selectedCourseCode, setSelectedCourseCode] = useState("");
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [books, setBooks] = useState<BookRow[]>([]);
+  const [books, setBooks] = useState<ViewRow[]>([]);
+
+  const courseTitle = useMemo(() => {
+    return (books?.[0]?.course_title ?? "").toString().trim();
+  }, [books]);
+
+  const resetBooksLevel = () => {
+    setBooks([]);
+    setSearchTerm("");
+  };
+
+  const resetCourseLevel = () => {
+    setCourseCodes([]);
+    setSelectedCourseCode("");
+    resetBooksLevel();
+  };
+
+  const resetProgramLevel = () => {
+    setPrograms([]);
+    setSelectedProgram("");
+    resetCourseLevel();
+  };
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.log("Error logging out:", error.message);
   };
 
+  const loadDepartments = async (cancelledRef: { cancelled: boolean }) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.from("library_courses").select("department");
+      if (error) throw error;
+      if (cancelledRef.cancelled) return;
+
+      setDepartments(uniqSorted((data ?? []).map((r: any) => r?.department)));
+    } catch (e: any) {
+      console.log("Error loading departments:", e?.message || e);
+    } finally {
+      if (!cancelledRef.cancelled) setLoading(false);
+    }
+  };
+
+  const loadPrograms = async (department: string, cancelledRef: { cancelled: boolean }) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("library_courses")
+        .select("program")
+        .eq("department", department);
+
+      if (error) throw error;
+      if (cancelledRef.cancelled) return;
+
+      setPrograms(uniqSorted((data ?? []).map((r: any) => r?.program)));
+    } catch (e: any) {
+      console.log("Error loading programs:", e?.message || e);
+      if (!cancelledRef.cancelled) setPrograms([]);
+    } finally {
+      if (!cancelledRef.cancelled) setLoading(false);
+    }
+  };
+
+  const loadCourseCodes = async (
+    department: string,
+    program: string,
+    cancelledRef: { cancelled: boolean }
+  ) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("library_courses")
+        .select("course_code")
+        .eq("department", department)
+        .eq("program", program);
+
+      if (error) throw error;
+      if (cancelledRef.cancelled) return;
+
+      setCourseCodes(uniqSorted((data ?? []).map((r: any) => r?.course_code)));
+    } catch (e: any) {
+      console.log("Error loading course codes:", e?.message || e);
+      if (!cancelledRef.cancelled) setCourseCodes([]);
+    } finally {
+      if (!cancelledRef.cancelled) setLoading(false);
+    }
+  };
+
+  const loadBooks = async (
+    department: string,
+    program: string,
+    courseCode: string,
+    cancelledRef: { cancelled: boolean }
+  ) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("v_course_books")
+        .select(
+          "department, program, course_code, course_title, book_id, acc_no, call_no, title, author, publisher, copyright_year, num_vols, apa_citation"
+        )
+        .eq("department", department)
+        .eq("program", program)
+        .eq("course_code", courseCode)
+        .order("book_id", { ascending: true });
+
+      if (error) throw error;
+      if (cancelledRef.cancelled) return;
+
+      setBooks((data ?? []) as ViewRow[]);
+    } catch (e: any) {
+      console.log("Error loading books:", e?.message || e);
+      if (!cancelledRef.cancelled) setBooks([]);
+    } finally {
+      if (!cancelledRef.cancelled) setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadFilters = async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase.from("books").select("Department, Program");
-        if (error) throw error;
-
-        const deptSet = new Set<string>();
-        const progSet = new Set<string>();
-
-        (data ?? []).forEach((row: any) => {
-          if (row?.Department) deptSet.add(row.Department);
-          if (row?.Program) progSet.add(row.Program);
-        });
-
-        setDepartments(Array.from(deptSet).sort());
-        setPrograms(Array.from(progSet).sort());
-      } catch (e: any) {
-        console.log("Error loading filters:", e?.message || e);
-      } finally {
-        setLoading(false);
-      }
+    const cancelledRef = { cancelled: false };
+    loadDepartments(cancelledRef);
+    return () => {
+      cancelledRef.cancelled = true;
     };
-
-    loadFilters();
   }, []);
 
   useEffect(() => {
-    const loadCourseCodes = async () => {
-      if (!selectedDepartment || !selectedProgram) {
-        setCourseCodes([]);
-        setSelectedCourseCode("");
-        return;
-      }
+    const cancelledRef = { cancelled: false };
 
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from("books")
-          .select("Course_code")
-          .eq("Department", selectedDepartment)
-          .eq("Program", selectedProgram);
+    if (!selectedDepartment) {
+      resetProgramLevel();
+      return () => {
+        cancelledRef.cancelled = true;
+      };
+    }
 
-        if (error) throw error;
+    setSelectedProgram("");
+    resetCourseLevel();
+    loadPrograms(selectedDepartment, cancelledRef);
 
-        const codesSet = new Set<string>();
-        (data ?? []).forEach((row: any) => {
-          if (row?.Course_code) codesSet.add(row.Course_code);
-        });
-
-        setCourseCodes(Array.from(codesSet).sort());
-      } catch (e: any) {
-        console.log("Error loading course codes:", e?.message || e);
-        setCourseCodes([]);
-      } finally {
-        setLoading(false);
-      }
+    return () => {
+      cancelledRef.cancelled = true;
     };
+  }, [selectedDepartment]);
 
-    loadCourseCodes();
+  useEffect(() => {
+    const cancelledRef = { cancelled: false };
+
+    if (!selectedDepartment || !selectedProgram) {
+      resetCourseLevel();
+      return () => {
+        cancelledRef.cancelled = true;
+      };
+    }
+
+    setSelectedCourseCode("");
+    resetBooksLevel();
+    loadCourseCodes(selectedDepartment, selectedProgram, cancelledRef);
+
+    return () => {
+      cancelledRef.cancelled = true;
+    };
   }, [selectedDepartment, selectedProgram]);
 
   useEffect(() => {
-    const loadBooks = async () => {
-      if (!selectedDepartment || !selectedProgram || !selectedCourseCode) {
-        setBooks([]);
-        return;
-      }
+    const cancelledRef = { cancelled: false };
 
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from("books")
-          .select("id, Title, Author, Publisher, Year, Edition, Department, Program, Course_code")
-          .eq("Department", selectedDepartment)
-          .eq("Program", selectedProgram)
-          .eq("Course_code", selectedCourseCode)
-          .order("id", { ascending: true });
+    if (!selectedDepartment || !selectedProgram || !selectedCourseCode) {
+      resetBooksLevel();
+      return () => {
+        cancelledRef.cancelled = true;
+      };
+    }
 
-        if (error) throw error;
+    loadBooks(selectedDepartment, selectedProgram, selectedCourseCode, cancelledRef);
 
-        setBooks((data ?? []) as BookRow[]);
-      } catch (e: any) {
-        console.log("Error loading books:", e?.message || e);
-        setBooks([]);
-      } finally {
-        setLoading(false);
-      }
+    return () => {
+      cancelledRef.cancelled = true;
     };
-
-    loadBooks();
   }, [selectedDepartment, selectedProgram, selectedCourseCode]);
 
   const filteredBooks = useMemo(() => {
@@ -135,21 +262,44 @@ const ProgramCourse = () => {
     if (!q) return books;
 
     return books.filter((b) => {
-      const t = (b.Title ?? "").toLowerCase();
-      const a = (b.Author ?? "").toLowerCase();
-      return t.includes(q) || a.includes(q);
+      const haystack = [
+        b.title,
+        b.author,
+        b.publisher,
+        b.call_no,
+        b.acc_no,
+      ]
+        .map((x) => (x ?? "").toString().toLowerCase())
+        .join(" | ");
+
+      return haystack.includes(q);
     });
   }, [books, searchTerm]);
 
+  const printCourseLibrary = () => {
+    if (!selectedCourseCode) return;
+
+    const header = `${selectedCourseCode}${courseTitle ? ` - ${courseTitle}` : ""}`;
+    const html = buildCoursePrintHtml(header, filteredBooks);
+
+    const w = window.open("", "_blank", "width=1100,height=800");
+    if (!w) return;
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  };
+
+  const showCourseHint = !selectedDepartment || !selectedProgram;
+  const showNoCodes = selectedDepartment && selectedProgram && !loading && courseCodes.length === 0;
+  const showTableHint = !selectedDepartment || !selectedProgram || !selectedCourseCode;
+
   return (
     <div className="pc-page">
-      {/* TOP BAR */}
       <header className="pc-topbar">
         <img className="pc-toplogo" src="/images/logo2.webp" alt="MAPUA LIBRARY" />
       </header>
 
       <div className="pc-body">
-        {/* SIDEBAR */}
         <aside className="pc-sidebar">
           <nav className="pc-nav">
             <NavLink to="/dashboard" className={({ isActive }) => (isActive ? "active" : "")}>
@@ -176,7 +326,6 @@ const ProgramCourse = () => {
           </button>
         </aside>
 
-        {/* MAIN */}
         <main className="pc-main">
           <div className="pc-main-head">
             <h1 className="pc-title">Program &amp; Course view</h1>
@@ -194,6 +343,15 @@ const ProgramCourse = () => {
 
               <button
                 type="button"
+                className="pc-printbtn"
+                disabled={!selectedCourseCode}
+                onClick={printCourseLibrary}
+              >
+                Print
+              </button>
+
+              <button
+                type="button"
                 className="pc-logbtn"
                 onClick={() =>
                   navigate("/books-encoding", {
@@ -207,76 +365,40 @@ const ProgramCourse = () => {
           </div>
 
           <section className="pc-grid">
-            {/* LEFT FILTERS */}
             <div className="pc-leftCard">
-              <label className="pc-label">Department</label>
-              <div className="pc-selectWrap">
-                <select
-                  className="pc-select"
-                  value={selectedDepartment}
-                  onChange={(e) => {
-                    setSelectedDepartment(e.target.value);
-                    setSelectedProgram("");
-                    setSelectedCourseCode("");
-                  }}
-                >
-                  <option value="">Select Department</option>
-                  {departments.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
-                <span className="pc-caret">⌄</span>
-              </div>
+              <SelectField
+                label="Department"
+                value={selectedDepartment}
+                onChange={(v) => setSelectedDepartment(v)}
+                options={departments}
+                placeholder="Select Department"
+              />
 
-              <label className="pc-label">Program</label>
-              <div className="pc-selectWrap">
-                <select
-                  className="pc-select"
-                  value={selectedProgram}
-                  onChange={(e) => {
-                    setSelectedProgram(e.target.value);
-                    setSelectedCourseCode("");
-                  }}
-                  disabled={!selectedDepartment}
-                >
-                  <option value="">Select Program</option>
-                  {programs.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </select>
-                <span className="pc-caret">⌄</span>
-              </div>
+              <SelectField
+                label="Program"
+                value={selectedProgram}
+                onChange={(v) => setSelectedProgram(v)}
+                options={programs}
+                placeholder="Select Program"
+                disabled={!selectedDepartment}
+              />
 
               <div className="pc-bigBox">
-                {!selectedDepartment || !selectedProgram ? (
-                  <div style={{ padding: 12, fontSize: 13, color: "#666" }}>
-                    Select Department and Program first.
-                  </div>
+                {showCourseHint ? (
+                  <div className="pc-boxMsg pc-boxHint">Select Department and Program first.</div>
                 ) : loading ? (
-                  <div style={{ padding: 12, fontSize: 13 }}>Loading...</div>
-                ) : courseCodes.length === 0 ? (
-                  <div style={{ padding: 12, fontSize: 13 }}>No course codes found.</div>
+                  <div className="pc-boxMsg pc-boxLoading">Loading...</div>
+                ) : showNoCodes ? (
+                  <div className="pc-boxMsg pc-boxEmpty">No course codes found.</div>
                 ) : (
-                  <ul style={{ margin: 0, padding: 12, listStyle: "none" }}>
+                  <ul className="pc-codeList">
                     {courseCodes.map((code) => {
                       const active = code === selectedCourseCode;
                       return (
                         <li
                           key={code}
+                          className={`pc-codeItem ${active ? "active" : ""}`}
                           onClick={() => setSelectedCourseCode(code)}
-                          style={{
-                            padding: "8px 10px",
-                            borderRadius: 8,
-                            cursor: "pointer",
-                            marginBottom: 6,
-                            border: "1px solid #eee",
-                            background: active ? "#f4f4f4" : "#fff",
-                            fontWeight: active ? 600 : 400,
-                          }}
                         >
                           {code}
                         </li>
@@ -287,61 +409,79 @@ const ProgramCourse = () => {
               </div>
             </div>
 
-            {/* RIGHT TABLE */}
             <div className="pc-rightCard">
               <div className="pc-tableTop">
-                <div className="pc-tableTitle">
-                  {selectedCourseCode || "Course Code"} Library
-                </div>
+                <div className="pc-tableTitle">{selectedCourseCode || "Course Code"} Library</div>
 
-                <button className="pc-sort" type="button" disabled>
-                  SORT <span className="pc-sort-ic">⇅</span>
-                </button>
               </div>
 
               <div className="pc-tableWrap">
                 <table className="pc-table">
                   <thead>
                     <tr>
-                      <th style={{ width: 90 }}>ID</th>
-                      <th style={{ width: 200 }}>Title</th>
-                      <th style={{ width: 120 }}>Author</th>
+                      <th className="pc-center" style={{ width: 90 }}>
+                        ID
+                      </th>
+                      <th style={{ width: 220 }}>Title</th>
+                      <th style={{ width: 160 }}>Author</th>
                       <th style={{ width: 140 }}>Publisher</th>
-                      <th style={{ width: 70 }}>Year</th>
-                      <th style={{ width: 130 }}>Course Code</th>
-                      <th style={{ width: 90 }}>Edition</th>
+                      <th className="pc-center" style={{ width: 70 }}>
+                        Year
+                      </th>
+                      <th className="pc-center" style={{ width: 120 }}>
+                        Call Number
+                      </th>
+                      <th className="pc-center" style={{ width: 90 }}>
+                        Acc Num
+                      </th>
+                      <th className="pc-center" style={{ width: 95 }}>
+                        Num of Vols
+                      </th>
+                      <th className="pc-center" style={{ width: 70 }}></th>
                     </tr>
                   </thead>
 
                   <tbody>
-                    {!selectedDepartment || !selectedProgram || !selectedCourseCode ? (
+                    {showTableHint ? (
                       <tr>
-                        <td colSpan={7} style={{ padding: 16, color: "#666" }}>
+                        <td colSpan={9} className="pc-rowMsg">
                           Select Department → Program → Course Code to view books.
                         </td>
                       </tr>
                     ) : loading ? (
                       <tr>
-                        <td colSpan={7} style={{ padding: 16 }}>
+                        <td colSpan={9} className="pc-rowMsg">
                           Loading...
                         </td>
                       </tr>
                     ) : filteredBooks.length === 0 ? (
                       <tr>
-                        <td colSpan={7} style={{ padding: 16 }}>
+                        <td colSpan={9} className="pc-rowMsg">
                           No books found for this course code.
                         </td>
                       </tr>
                     ) : (
-                      filteredBooks.map((b) => (
-                        <tr key={b.id}>
-                          <td>{b.id}</td>
-                          <td>{b.Title}</td>
-                          <td>{b.Author}</td>
-                          <td>{b.Publisher}</td>
-                          <td>{b.Year}</td>
-                          <td>{b.Course_code}</td>
-                          <td>{b.Edition}</td>
+                      filteredBooks.map((b, index) => (
+                        <tr key={b.book_id}>
+                          <td className="pc-center">{index + 1}</td>
+                          <td>{b.title}</td>
+                          <td>{b.author}</td>
+                          <td>{b.publisher}</td>
+                          <td className="pc-center">{b.copyright_year ?? ""}</td>
+                          <td className="pc-center">{b.call_no ?? ""}</td>
+                          <td className="pc-center">{b.acc_no ?? ""}</td>
+                          <td className="pc-center">{b.num_vols ?? ""}</td>
+                          <td className="pc-center">
+                            <button
+                              type="button"
+                              className="pc-editbtn"
+                              onClick={() =>
+                                navigate(`/editing/${b.book_id}`, { state: { from: location.pathname } })
+                              }
+                            >
+                              Edit
+                            </button>
+                          </td>
                         </tr>
                       ))
                     )}
@@ -355,5 +495,4 @@ const ProgramCourse = () => {
     </div>
   );
 };
-
 export default ProgramCourse;

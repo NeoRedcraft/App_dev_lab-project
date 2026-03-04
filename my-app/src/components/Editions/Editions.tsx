@@ -3,16 +3,16 @@ import { supabase } from "../../database/client";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 
-type BookRow = {
-  id: number;
-  Title: string | null;
-  Author: string | null;
-  Publisher: string | null;
-  Year: string | null;     
-  Edition: string | null;
-  Department: string | null;
-  Program: string | null;
-  Course_code: string | null;
+type ViewRow = {
+  department: string | null;
+  program: string | null;
+  course_code: string | null;
+  course_title: string | null;
+
+  book_id: number;
+  title: string | null;
+  author: string | null;
+  copyright_year: number | null;
 };
 
 const OUTDATED_YEARS = 5;
@@ -32,76 +32,109 @@ const Editions = () => {
   const [selectedCourseCode, setSelectedCourseCode] = useState("");
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [books, setBooks] = useState<BookRow[]>([]);
+  const [books, setBooks] = useState<ViewRow[]>([]);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.log("Error logging out:", error.message);
   };
 
-  const getStatus = (yearText: string | null) => {
-    if (!yearText) return "—";
-
-    const yearNum = parseInt(yearText, 10);
-    if (!Number.isFinite(yearNum)) return "—";
-
+  const getStatus = (yearNum: number | null) => {
+    if (!yearNum || !Number.isFinite(yearNum)) return "—";
     const currentYear = new Date().getFullYear();
     const age = currentYear - yearNum;
 
-    return age >= OUTDATED_YEARS ? "Outdated" : "Up-to-date";
+    return age >= OUTDATED_YEARS ? "OUTDATED" : "LATEST EDITION";
   };
 
   useEffect(() => {
-    const loadFilters = async () => {
+    const loadDepartments = async () => {
       setLoading(true);
       try {
-        const { data, error } = await supabase.from("books").select("Department, Program");
+        const { data, error } = await supabase.from("library_courses").select("department");
         if (error) throw error;
 
-        const deptSet = new Set<string>();
-        const progSet = new Set<string>();
-
+        const set = new Set<string>();
         (data ?? []).forEach((row: any) => {
-          if (row?.Department) deptSet.add(row.Department);
-          if (row?.Program) progSet.add(row.Program);
+          const d = (row?.department ?? "").toString().trim();
+          if (d) set.add(d);
         });
 
-        setDepartments(Array.from(deptSet).sort());
-        setPrograms(Array.from(progSet).sort());
+        setDepartments(Array.from(set).sort());
       } catch (e: any) {
-        console.log("Error loading filters:", e?.message || e);
+        console.log("Error loading departments:", e?.message || e);
       } finally {
         setLoading(false);
       }
     };
 
-    loadFilters();
+    loadDepartments();
   }, []);
 
   useEffect(() => {
-    const loadCourseCodes = async () => {
-      if (!selectedDepartment || !selectedProgram) {
-        setCourseCodes([]);
+    const loadPrograms = async () => {
+      if (!selectedDepartment) {
+        setPrograms([]);
+        setSelectedProgram("");
         setSelectedCourseCode("");
+        setCourseCodes([]);
+        setBooks([]);
         return;
       }
 
       setLoading(true);
       try {
         const { data, error } = await supabase
-          .from("books")
-          .select("Course_code")
-          .eq("Department", selectedDepartment)
-          .eq("Program", selectedProgram);
+          .from("library_courses")
+          .select("program")
+          .eq("department", selectedDepartment);
 
         if (error) throw error;
 
-        const codesSet = new Set<string>();
+        const set = new Set<string>();
         (data ?? []).forEach((row: any) => {
-          if (row?.Course_code) codesSet.add(row.Course_code);
+          const p = (row?.program ?? "").toString().trim();
+          if (p) set.add(p);
         });
 
-        setCourseCodes(Array.from(codesSet).sort());
+        setPrograms(Array.from(set).sort());
+      } catch (e: any) {
+        console.log("Error loading programs:", e?.message || e);
+        setPrograms([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPrograms();
+  }, [selectedDepartment]);
+
+  useEffect(() => {
+    const loadCourseCodes = async () => {
+      if (!selectedDepartment || !selectedProgram) {
+        setCourseCodes([]);
+        setSelectedCourseCode("");
+        setBooks([]);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("library_courses")
+          .select("course_code")
+          .eq("department", selectedDepartment)
+          .eq("program", selectedProgram);
+
+        if (error) throw error;
+
+        const set = new Set<string>();
+        (data ?? []).forEach((row: any) => {
+          const c = (row?.course_code ?? "").toString().trim();
+          if (c) set.add(c);
+        });
+
+        setCourseCodes(Array.from(set).sort());
       } catch (e: any) {
         console.log("Error loading course codes:", e?.message || e);
         setCourseCodes([]);
@@ -123,16 +156,16 @@ const Editions = () => {
       setLoading(true);
       try {
         const { data, error } = await supabase
-          .from("books")
-          .select("id, Title, Author, Publisher, Year, Edition, Department, Program, Course_code")
-          .eq("Department", selectedDepartment)
-          .eq("Program", selectedProgram)
-          .eq("Course_code", selectedCourseCode)
-          .order("id", { ascending: true });
+          .from("v_course_books")
+          .select("book_id, title, author, copyright_year, department, program, course_code")
+          .eq("department", selectedDepartment)
+          .eq("program", selectedProgram)
+          .eq("course_code", selectedCourseCode)
+          .order("book_id", { ascending: true });
 
         if (error) throw error;
 
-        setBooks((data ?? []) as BookRow[]);
+        setBooks((data ?? []) as ViewRow[]);
       } catch (e: any) {
         console.log("Error loading books:", e?.message || e);
         setBooks([]);
@@ -149,11 +182,15 @@ const Editions = () => {
     if (!q) return books;
 
     return books.filter((b) => {
-      const t = (b.Title ?? "").toLowerCase();
-      const a = (b.Author ?? "").toLowerCase();
+      const t = (b.title ?? "").toLowerCase();
+      const a = (b.author ?? "").toLowerCase();
       return t.includes(q) || a.includes(q);
     });
   }, [books, searchTerm]);
+
+  const showCourseHint = !selectedDepartment || !selectedProgram;
+  const showNoCodes = selectedDepartment && selectedProgram && !loading && courseCodes.length === 0;
+  const showTableHint = !selectedDepartment || !selectedProgram || !selectedCourseCode;
 
   return (
     <div className="pc-page">
@@ -221,7 +258,6 @@ const Editions = () => {
             {/* LEFT FILTERS */}
             <div className="pc-leftCard">
               <label className="pc-label">Department</label>
-
               <div className="pc-selectWrap">
                 <select
                   className="pc-select"
@@ -243,7 +279,6 @@ const Editions = () => {
               </div>
 
               <label className="pc-label">Program</label>
-
               <div className="pc-selectWrap">
                 <select
                   className="pc-select"
@@ -264,33 +299,22 @@ const Editions = () => {
                 <span className="pc-caret">⌄</span>
               </div>
 
-              {/* COURSE CODE LIST */}
               <div className="pc-bigBox">
-                {!selectedDepartment || !selectedProgram ? (
-                  <div style={{ padding: 12, fontSize: 13, color: "#666" }}>
-                    Select Department and Program first.
-                  </div>
+                {showCourseHint ? (
+                  <div className="pc-boxMsg pc-boxHint">Select Department and Program first.</div>
                 ) : loading ? (
-                  <div style={{ padding: 12, fontSize: 13 }}>Loading...</div>
-                ) : courseCodes.length === 0 ? (
-                  <div style={{ padding: 12, fontSize: 13 }}>No course codes found.</div>
+                  <div className="pc-boxMsg pc-boxLoading">Loading...</div>
+                ) : showNoCodes ? (
+                  <div className="pc-boxMsg pc-boxEmpty">No course codes found.</div>
                 ) : (
-                  <ul style={{ margin: 0, padding: 12, listStyle: "none" }}>
+                  <ul className="pc-codeList">
                     {courseCodes.map((code) => {
                       const active = code === selectedCourseCode;
                       return (
                         <li
                           key={code}
+                          className={`pc-codeItem ${active ? "active" : ""}`}
                           onClick={() => setSelectedCourseCode(code)}
-                          style={{
-                            padding: "8px 10px",
-                            borderRadius: 8,
-                            cursor: "pointer",
-                            marginBottom: 6,
-                            border: "1px solid #eee",
-                            background: active ? "#f4f4f4" : "#fff",
-                            fontWeight: active ? 600 : 400,
-                          }}
                         >
                           {code}
                         </li>
@@ -314,48 +338,53 @@ const Editions = () => {
               </div>
 
               <div className="pc-tableWrap">
-                <table className="pc-table">
+                <table className="pc-table pc-edTable">
                   <thead>
                     <tr>
-                      <th style={{ width: 90 }}>ID</th>
-                      <th style={{ width: 220 }}>Title</th>
-                      <th style={{ width: 120 }}>Author</th>
-                      <th style={{ width: 140 }}>Publisher</th>
-                      <th style={{ width: 70 }}>Year</th>
-                      <th style={{ width: 90 }}>Edition</th>
-                      <th style={{ width: 120 }}>Status</th>
+                      <th className="pc-col-id pc-center">ID</th>
+                      <th className="pc-col-title">Title</th>
+                      <th className="pc-col-author">Author</th>
+                      <th className="pc-col-year pc-center">Year</th>
+                      <th className="pc-col-status pc-center">Status</th>
+                      <th className="pc-col-edit pc-center"></th>
                     </tr>
                   </thead>
 
                   <tbody>
-                    {!selectedDepartment || !selectedProgram || !selectedCourseCode ? (
+                    {showTableHint ? (
                       <tr>
-                        <td colSpan={7} style={{ padding: 16, color: "#666" }}>
+                        <td colSpan={6} className="pc-rowMsg">
                           Select Department → Program → Course Code to view books.
                         </td>
                       </tr>
                     ) : loading ? (
                       <tr>
-                        <td colSpan={7} style={{ padding: 16 }}>
+                        <td colSpan={6} className="pc-rowMsg">
                           Loading...
                         </td>
                       </tr>
                     ) : filteredBooks.length === 0 ? (
                       <tr>
-                        <td colSpan={7} style={{ padding: 16 }}>
+                        <td colSpan={6} className="pc-rowMsg">
                           No books found for this course code.
                         </td>
                       </tr>
                     ) : (
-                      filteredBooks.map((b) => (
-                        <tr key={b.id}>
-                          <td>{b.id}</td>
-                          <td>{b.Title}</td>
-                          <td>{b.Author}</td>
-                          <td>{b.Publisher}</td>
-                          <td>{b.Year}</td>
-                          <td>{b.Edition}</td>
-                          <td>{getStatus(b.Year)}</td>
+                      filteredBooks.map((b, index) => (
+                        <tr key={b.book_id}>
+                          <td className="pc-center">{index + 1}</td>
+                          <td>{b.title}</td>
+                          <td>{b.author}</td>
+                          <td className="pc-center">{b.copyright_year ?? ""}</td>
+                          <td className="pc-center">{getStatus(b.copyright_year)}</td>
+                          <td className="pc-center">
+                             <button
+                                type="button"
+                                onClick={() => navigate(`/editing/${b.book_id}`, { state: { from: location.pathname } })}
+                              >
+                                Edit
+                              </button>
+                          </td>
                         </tr>
                       ))
                     )}
@@ -363,7 +392,7 @@ const Editions = () => {
                 </table>
               </div>
 
-              <div style={{ fontSize: 12, color: "#777", paddingTop: 8 }}>
+              <div className="pc-footnote">
                 Status rule: Outdated if book is {OUTDATED_YEARS}+ years old.
               </div>
             </div>
