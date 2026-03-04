@@ -6,6 +6,7 @@ import Editions from "./components/Editions/Editions";
 import ProgramCourse from "./components/ProgramCourse/ProgramCourse";
 import ReportSummary from "./components/ReportSummary/ReportSummary";
 import BooksEncoding from "./components/BooksEncoding/BooksEncoding";
+import Editing from "./components/Editing/Editing";
 
 import type { Session } from '@supabase/supabase-js';
 
@@ -41,6 +42,7 @@ function App() {
         <Route path="/editions" element={<Editions />} />
         <Route path="/report-summary" element={<ReportSummary />} />
         <Route path="/books-encoding" element={<BooksEncoding />} />
+        <Route path="/editing/:bookId" element={<Editing />} />
 
         {/* fallback */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

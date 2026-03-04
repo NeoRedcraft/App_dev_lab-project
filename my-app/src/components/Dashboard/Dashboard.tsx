@@ -4,7 +4,7 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 type BookRow = {
-  id: number;
+  id: number; 
   Title: string | null;
   Author: string | null;
   Department: string | null;
@@ -13,87 +13,83 @@ type BookRow = {
   Created_at: string | null;
 };
 
-const monthNames = [
-  "Jan","Feb","Mar","Apr","May","Jun",
-  "Jul","Aug","Sep","Oct","Nov","Dec",
-];
+const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-/* ── Inline SVG Icons ── */
 const IconBooks = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
   </svg>
 );
 
 const IconCalendar = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-    <line x1="16" y1="2" x2="16" y2="6"/>
-    <line x1="8" y1="2" x2="8" y2="6"/>
-    <line x1="3" y1="10" x2="21" y2="10"/>
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
   </svg>
 );
 
 const IconBuilding = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="7" width="20" height="14" rx="2"/>
-    <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
-    <line x1="12" y1="12" x2="12" y2="16"/>
-    <line x1="10" y1="14" x2="14" y2="14"/>
+    <rect x="2" y="7" width="20" height="14" rx="2" />
+    <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+    <line x1="12" y1="12" x2="12" y2="16" />
+    <line x1="10" y1="14" x2="14" y2="14" />
   </svg>
 );
 
 const IconGraduationCap = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-    <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+    <path d="M6 12v5c3 3 9 3 12 0v-5" />
   </svg>
 );
 
 const IconTag = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-    <line x1="7" y1="7" x2="7.01" y2="7"/>
+    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+    <line x1="7" y1="7" x2="7.01" y2="7" />
   </svg>
 );
 
 const IconSearch = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8"/>
-    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    <circle cx="11" cy="11" r="8" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
   </svg>
 );
 
 const IconFolder = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
   </svg>
 );
 
 const IconLayers = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-    <polyline points="2 17 12 22 22 17"/>
-    <polyline points="2 12 12 17 22 12"/>
+    <polygon points="12 2 2 7 12 12 22 7 12 2" />
+    <polyline points="2 17 12 22 22 17" />
+    <polyline points="2 12 12 17 22 12" />
   </svg>
 );
 
 const IconBarChart = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="20" x2="18" y2="10"/>
-    <line x1="12" y1="20" x2="12" y2="4"/>
-    <line x1="6" y1="20" x2="6" y2="14"/>
-    <line x1="2" y1="20" x2="22" y2="20"/>
+    <line x1="18" y1="20" x2="18" y2="10" />
+    <line x1="12" y1="20" x2="12" y2="4" />
+    <line x1="6" y1="20" x2="6" y2="14" />
+    <line x1="2" y1="20" x2="22" y2="20" />
   </svg>
 );
 
@@ -117,11 +113,23 @@ const Dashboard = () => {
       setLoading(true);
       try {
         const { data, error } = await supabase
-          .from("books")
-          .select("id, Title, Author, Department, Program, Course_code, Created_at")
-          .order("Created_at", { ascending: false });
+          .from("v_course_books")
+          .select("book_id, title, author, department, program, course_code, created_at")
+          .order("created_at", { ascending: false });
+
         if (error) throw error;
-        setBooks(data ?? []);
+
+        const mapped: BookRow[] = (data ?? []).map((r: any) => ({
+          id: r.book_id,                
+          Title: r.title ?? null,
+          Author: r.author ?? null,
+          Department: r.department ?? null,
+          Program: r.program ?? null,
+          Course_code: r.course_code ?? null,
+          Created_at: r.created_at ?? null,
+        }));
+
+        setBooks(mapped);
       } catch (e: any) {
         console.log("Error loading books:", e?.message || e);
       } finally {
@@ -279,7 +287,6 @@ const Dashboard = () => {
             <div className="dash-loading">Loading data…</div>
           ) : (
             <>
-              {/* ── Stat Cards ── */}
               <section className="dash-stats">
                 <div className="stat-card stat-primary">
                   <div className="stat-icon"><IconBooks /></div>
@@ -321,7 +328,6 @@ const Dashboard = () => {
                 </div>
               </section>
 
-              {/* ── Bottom Row ── */}
               <section className="dash-bottom">
                 <div className="dash-chart-card">
                   <h2 className="dash-card-title">Books Logged — Last 6 Months</h2>
@@ -330,10 +336,7 @@ const Dashboard = () => {
                       <div className="bar-col" key={m.label}>
                         <span className="bar-value">{m.count}</span>
                         <div className="bar-wrap">
-                          <div
-                            className="bar-fill"
-                            style={{ height: `${(m.count / maxCount) * 100}%` }}
-                          />
+                          <div className="bar-fill" style={{ height: `${(m.count / maxCount) * 100}%` }} />
                         </div>
                         <span className="bar-label">{m.label}</span>
                       </div>
@@ -349,9 +352,7 @@ const Dashboard = () => {
                     <ul className="dash-recent-list">
                       {recentBooks.map((b) => {
                         const d = b.Created_at ? new Date(b.Created_at) : null;
-                        const dateStr = d
-                          ? `${monthNames[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`
-                          : "—";
+                        const dateStr = d ? `${monthNames[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}` : "—";
                         return (
                           <li key={b.id} className="dash-recent-item">
                             <div className="dri-left">
@@ -372,7 +373,6 @@ const Dashboard = () => {
                 </div>
               </section>
 
-              {/* ── Quick Nav (3 cards only) ── */}
               <section className="dash-quicknav">
                 <h2 className="dash-card-title">Quick Access</h2>
                 <div className="dash-qnav-grid">

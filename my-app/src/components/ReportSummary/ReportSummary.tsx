@@ -1,35 +1,44 @@
 import "./ReportSummary.css";
 import { supabase } from "../../database/client";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { buildReportSummaryPrintHtml, type SummaryRow as PrintSummaryRow } from "./reportSummaryPrintTemplate";
 
-type BookRow = {
-  id: number;
-  Title: string | null;
-  Author: string | null;
-  Publisher: string | null;
-  Year: string | null; 
-  Edition: string | null;
-  Course_code: string | null;
-  Created_at: string | null; 
+type ViewRow = {
+  department: string | null;
+  program: string | null;
+  course_code: string | null;
+  course_title: string | null;
+
+  book_id: number;
+  copyright_year: number | null;
+  num_vols: number | null;
 };
 
-const monthNames = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+type SummaryRow = {
+  course_code: string;
+  course_title: string;
 
-const pad2 = (n: number) => String(n).padStart(2, "0");
+  total_titles: number;
+  total_vols: number;
+
+  arc: number;
+  perYear: Record<number, number>;
+
+  withinLast5: number;
+  neededTitles: number;
+};
+
+const REQUIRED_RECENT_TITLES = 5;
+
+function uniqSorted(values: Array<string | null | undefined>) {
+  const set = new Set<string>();
+  for (const v of values) {
+    const s = (v ?? "").toString().trim();
+    if (s) set.add(s);
+  }
+  return Array.from(set).sort((a, b) => a.localeCompare(b));
+}
 
 const ReportSummary = () => {
   const navigate = useNavigate();
@@ -37,144 +46,236 @@ const ReportSummary = () => {
 
   const [loading, setLoading] = useState(false);
 
-  const [availableYears, setAvailableYears] = useState<number[]>([]);
-  const [selectedYear, setSelectedYear] = useState<string>(""); 
-  const [selectedMonth, setSelectedMonth] = useState<string>(""); 
-  const [searchTerm, setSearchTerm] = useState("");
+  const [departments, setDepartments] = useState<string[]>([]);
+  const [programs, setPrograms] = useState<string[]>([]);
 
-  const [books, setBooks] = useState<BookRow[]>([]);
-  const printRef = useRef<HTMLDivElement | null>(null);
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [selectedProgram, setSelectedProgram] = useState("");
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [rows, setRows] = useState<ViewRow[]>([]);
+
+  const currentYear = new Date().getFullYear();
+
+  const yearCols = useMemo(() => {
+    const cols: number[] = [];
+    for (let i = 5; i >= 0; i--) cols.push(currentYear - i);
+    return cols;
+  }, [currentYear]);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.log("Error logging out:", error.message);
   };
 
+  const resetProgramLevel = () => {
+    setPrograms([]);
+    setSelectedProgram("");
+    setRows([]);
+  };
+
+  const resetRows = () => {
+    setRows([]);
+  };
+
+  const loadDepartments = async (cancelledRef: { cancelled: boolean }) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.from("library_courses").select("department");
+      if (error) throw error;
+      if (cancelledRef.cancelled) return;
+
+      setDepartments(uniqSorted((data ?? []).map((r) => r.department)));
+    } catch (e: any) {
+      console.log("Error loading departments:", e?.message || e);
+      if (!cancelledRef.cancelled) setDepartments([]);
+    } finally {
+      if (!cancelledRef.cancelled) setLoading(false);
+    }
+  };
+
+  const loadPrograms = async (dept: string, cancelledRef: { cancelled: boolean }) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("library_courses")
+        .select("program")
+        .eq("department", dept);
+
+      if (error) throw error;
+      if (cancelledRef.cancelled) return;
+
+      setPrograms(uniqSorted((data ?? []).map((r) => r.program)));
+    } catch (e: any) {
+      console.log("Error loading programs:", e?.message || e);
+      if (!cancelledRef.cancelled) setPrograms([]);
+    } finally {
+      if (!cancelledRef.cancelled) setLoading(false);
+    }
+  };
+
+  const loadSummaryRows = async (dept: string, prog: string, cancelledRef: { cancelled: boolean }) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("v_course_books")
+        .select("department, program, course_code, course_title, book_id, copyright_year, num_vols")
+        .eq("department", dept)
+        .eq("program", prog)
+        .order("course_code", { ascending: true });
+
+      if (error) throw error;
+      if (cancelledRef.cancelled) return;
+
+      setRows((data ?? []) as ViewRow[]);
+    } catch (e: any) {
+      console.log("Error loading report rows:", e?.message || e);
+      if (!cancelledRef.cancelled) setRows([]);
+    } finally {
+      if (!cancelledRef.cancelled) setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadYears = async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase.from("books").select("Created_at");
-        if (error) throw error;
-
-        const ySet = new Set<number>();
-        (data ?? []).forEach((r: any) => {
-          if (!r?.Created_at) return;
-          const d = new Date(r.Created_at);
-          if (Number.isNaN(d.getTime())) return;
-          ySet.add(d.getFullYear());
-        });
-
-        const years = Array.from(ySet).sort((a, b) => b - a);
-        setAvailableYears(years);
-      } catch (e: any) {
-        console.log("Error loading years:", e?.message || e);
-        setAvailableYears([]);
-      } finally {
-        setLoading(false);
-      }
+    const cancelledRef = { cancelled: false };
+    loadDepartments(cancelledRef);
+    return () => {
+      cancelledRef.cancelled = true;
     };
-
-    loadYears();
   }, []);
 
   useEffect(() => {
-    const loadBooks = async () => {
-      if (!selectedYear) {
-        setBooks([]);
-        return;
-      }
+    const cancelledRef = { cancelled: false };
 
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from("books")
-          .select("id, Title, Author, Course_code, Publisher, Year, Edition, Created_at")
-          .order("id", { ascending: true });
+    if (!selectedDepartment) {
+      resetProgramLevel();
+      return () => {
+        cancelledRef.cancelled = true;
+      };
+    }
 
-        if (error) throw error;
+    setSelectedProgram("");
+    setRows([]);
 
-        const y = parseInt(selectedYear, 10);
-        const m = selectedMonth ? parseInt(selectedMonth, 10) : null;
-        const filtered = (data ?? []).filter((row: any) => {
-          const ca = row?.Created_at;
-          if (!ca) return false;
-          const d = new Date(ca);
-          if (Number.isNaN(d.getTime())) return false;
+    loadPrograms(selectedDepartment, cancelledRef);
 
-          const sameYear = d.getFullYear() === y;
-          if (!sameYear) return false;
-
-          if (m) {
-            return d.getMonth() + 1 === m;
-          }
-          return true;
-        }) as BookRow[];
-
-        setBooks(filtered);
-      } catch (e: any) {
-        console.log("Error loading books:", e?.message || e);
-        setBooks([]);
-      } finally {
-        setLoading(false);
-      }
+    return () => {
+      cancelledRef.cancelled = true;
     };
+  }, [selectedDepartment]);
 
-    loadBooks();
-  }, [selectedYear, selectedMonth]);
+  useEffect(() => {
+    const cancelledRef = { cancelled: false };
 
-  const shownBooks = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase();
-    if (!q) return books;
+    if (!selectedDepartment || !selectedProgram) {
+      resetRows();
+      return () => {
+        cancelledRef.cancelled = true;
+      };
+    }
 
-    return books.filter((b) => {
-      const t = (b.Title ?? "").toLowerCase();
-      const a = (b.Author ?? "").toLowerCase();
-      const cc = (b.Course_code ?? "").toLowerCase();
-      const p = (b.Publisher ?? "").toLowerCase();
-      return t.includes(q) || a.includes(q) || cc.includes(q) || p.includes(q);
+    loadSummaryRows(selectedDepartment, selectedProgram, cancelledRef);
+
+    return () => {
+      cancelledRef.cancelled = true;
+    };
+  }, [selectedDepartment, selectedProgram]);
+
+  const summary: SummaryRow[] = useMemo(() => {
+    const minYear = currentYear - 5;
+    const yearSet = new Set<number>(yearCols);
+
+    const byCourse = new Map<string, SummaryRow>();
+
+    // Make counts “distinct by title” to avoid double-counting if the view duplicates rows.
+    // key = `${course_code}|${book_id}`
+    const seenTitle = new Set<string>();
+    const seenYearTitle = new Set<string>(); 
+    const seenArcTitle = new Set<string>();  
+
+    for (const r of rows) {
+      const cc = (r.course_code ?? "General").toString();
+      const ct = (r.course_title ?? "").toString();
+
+      if (!byCourse.has(cc)) {
+        byCourse.set(cc, {
+          course_code: cc,
+          course_title: ct,
+          total_titles: 0,
+          total_vols: 0,
+          arc: 0,
+          perYear: {},
+          withinLast5: 0,
+          neededTitles: 0,
+        });
+      }
+
+      const item = byCourse.get(cc)!;
+
+      const titleKey = `${cc}|${r.book_id}`;
+      if (!seenTitle.has(titleKey)) {
+        seenTitle.add(titleKey);
+        item.total_titles += 1;
+
+        const vols = typeof r.num_vols === "number" ? r.num_vols : 0;
+        item.total_vols += vols;
+      }
+
+      const y = r.copyright_year;
+      if (!y || typeof y !== "number") continue;
+
+      if (y < minYear) {
+        const arcKey = `${cc}|${r.book_id}|arc`;
+        if (!seenArcTitle.has(arcKey)) {
+          seenArcTitle.add(arcKey);
+          item.arc += 1;
+        }
+      } else if (yearSet.has(y)) {
+        const yKey = `${cc}|${r.book_id}|${y}`;
+        if (!seenYearTitle.has(yKey)) {
+          seenYearTitle.add(yKey);
+          item.perYear[y] = (item.perYear[y] ?? 0) + 1;
+        }
+      }
+    }
+
+    const list = Array.from(byCourse.values()).map((x) => {
+      let within = 0;
+      for (let i = 0; i <= 4; i++) {
+        within += x.perYear[currentYear - i] ?? 0;
+      }
+      x.withinLast5 = within;
+      x.neededTitles = Math.max(0, REQUIRED_RECENT_TITLES - within);
+      return x;
     });
-  }, [books, searchTerm]);
 
-  const handleSaveExcel = () => {
-    const headers = ["ID", "Title", "Author", "Course Code", "Publisher", "Year", "Accession number", "Edition"];
-    const rows = shownBooks.map((b) => [
-      b.id,
-      b.Title ?? "",
-      b.Author ?? "",
-      b.Course_code ?? "",
-      b.Publisher ?? "",
-      b.Year ?? "",
-      b.Course_code ?? "", 
-      b.Edition ?? "",
-    ]);
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return list;
 
-    const escapeCSV = (v: any) => {
-      const s = String(v ?? "");
-      if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-      return s;
-    };
+    return list.filter((r) => {
+      return (
+        r.course_code.toLowerCase().includes(q) ||
+        (r.course_title ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [rows, yearCols, currentYear, searchTerm]);
 
-    const csv = [headers, ...rows].map((r) => r.map(escapeCSV).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const printReport = () => {
+    if (!selectedDepartment || !selectedProgram) return;
 
-    const yearPart = selectedYear || "all";
-    const monthPart = selectedMonth ? `-${selectedMonth}` : "";
-    const fileName = `report-summary-${yearPart}${monthPart}.csv`;
+    const html = buildReportSummaryPrintHtml({
+      department: selectedDepartment,
+      program: selectedProgram,
+      yearCols,
+      summary: summary as PrintSummaryRow[],
+    });
 
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    URL.revokeObjectURL(url);
+    const w = window.open("", "_blank", "width=1200,height=800");
+    if (!w) return;
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
   };
-
-  const handleSavePDF = () => {
-    window.print();
-  };
-
-  const monthLabel = selectedMonth ? monthNames[parseInt(selectedMonth, 10) - 1] : "All Months";
 
   return (
     <div className="pc-page">
@@ -211,19 +312,21 @@ const ReportSummary = () => {
 
         <main className="pc-main">
           <div className="pc-main-head">
-            <h1 className="pc-title">Report Summary</h1>
+            <div className="rs-headLeft">
+              <h1 className="pc-title">Report Summary</h1>
 
-            <div className="pc-head-right">
-              <div className="pc-search">
+              <div className="pc-search rs-search">
                 <input
                   type="text"
-                  placeholder="Search Book"
+                  placeholder="Search Course"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
                 <span className="pc-search-ic">🔍</span>
               </div>
+            </div>
 
+            <div className="pc-head-right">
               <button
                 type="button"
                 className="pc-logbtn"
@@ -238,126 +341,124 @@ const ReportSummary = () => {
             </div>
           </div>
 
-          <section className="rs-box" ref={printRef}>
+          <section className="rs-box">
             <div className="rs-top">
-              <div className="rs-tabs">
-                <select
-                  className="rs-pill"
-                  value={selectedYear}
-                  onChange={(e) => {
-                    setSelectedYear(e.target.value);
-                    setSelectedMonth("");
-                  }}
-                >
-                  <option value="">Select Year (required)</option>
-                  {availableYears.map((y) => (
-                    <option key={y} value={String(y)}>
-                      {y}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  className="rs-pill"
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  disabled={!selectedYear}
-                >
-                  <option value="">{selectedYear ? "All Months (optional)" : "Select Year first"}</option>
-                  {Array.from({ length: 12 }).map((_, i) => {
-                    const mm = pad2(i + 1);
-                    return (
-                      <option key={mm} value={mm}>
-                        {monthNames[i]}
+              <div className="rs-filters">
+                <div className="rs-selectWrap">
+                  <select
+                    className="rs-select"
+                    value={selectedDepartment}
+                    onChange={(e) => setSelectedDepartment(e.target.value)}
+                  >
+                    <option value="">Department</option>
+                    {departments.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
                       </option>
-                    );
-                  })}
-                </select>
+                    ))}
+                  </select>
+                  <span className="rs-caret">⌄</span>
+                </div>
+
+                <div className="rs-selectWrap">
+                  <select
+                    className="rs-select"
+                    value={selectedProgram}
+                    onChange={(e) => setSelectedProgram(e.target.value)}
+                    disabled={!selectedDepartment}
+                  >
+                    <option value="">{selectedDepartment ? "Program" : "Select Department"}</option>
+                    {programs.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="rs-caret">⌄</span>
+                </div>
               </div>
 
-              <div className="rs-actions">
-                <button
-                  type="button"
-                  className="rs-pill rs-small"
-                  onClick={handleSavePDF}
-                  disabled={!selectedYear || shownBooks.length === 0}
-                  title={!selectedYear ? "Select a year first" : shownBooks.length === 0 ? "No data to print" : ""}
-                >
-                  Save PDF
-                </button>
-                <button
-                  type="button"
-                  className="rs-pill rs-small"
-                  onClick={handleSaveExcel}
-                  disabled={!selectedYear || shownBooks.length === 0}
-                  title={!selectedYear ? "Select a year first" : shownBooks.length === 0 ? "No data to export" : ""}
-                >
-                  Save Excel
-                </button>
-              </div>
-            </div>
-
-            <div style={{ fontSize: 12, color: "#666", marginBottom: 8 }}>
-              {selectedYear ? (
-                <>
-                  Showing acquired books for <b>{selectedYear}</b> • <b>{monthLabel}</b> • Total:{" "}
-                  <b>{shownBooks.length}</b>
-                </>
-              ) : (
-                "Select a Year to display acquired books."
-              )}
+              <button
+                type="button"
+                className="rs-printBtn"
+                onClick={printReport}
+                disabled={!selectedDepartment || !selectedProgram || summary.length === 0}
+                title={
+                  !selectedDepartment || !selectedProgram
+                    ? "Select Department & Program"
+                    : summary.length === 0
+                    ? "No data to print"
+                    : ""
+                }
+              >
+                Print
+              </button>
             </div>
 
             <div className="rs-tableWrap">
               <table className="rs-table">
                 <thead>
                   <tr>
-                    <th style={{ width: 90 }}>ID</th>
-                    <th>Title</th>
-                    <th style={{ width: 140 }}>Author</th>
-                    <th style={{ width: 120 }}>Course Code</th>
-                    <th style={{ width: 140 }}>Publisher</th>
-                    <th style={{ width: 70 }}>Year</th>
-                    <th style={{ width: 140 }}>Course Code</th>
-                    <th style={{ width: 90 }}>Edition</th>
+                    <th className="rs-col-code">Course Code</th>
+                    <th className="rs-col-title">Course Code title</th>
+                    <th className="rs-col-ttl">Total Num of Titles</th>
+                    <th className="rs-col-vol">Total Num of Volume</th>
+                    <th className="rs-col-arc">Arc</th>
+
+                    {yearCols.map((y) => (
+                      <th key={y} className="rs-col-year">
+                        {y}
+                      </th>
+                    ))}
+
+                    <th className="rs-col-within">COPYRIGHT WITHIN THE LAST 5 YEARS</th>
+                    <th className="rs-col-needed">Needed titles</th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {!selectedYear ? (
+                  {!selectedDepartment || !selectedProgram ? (
                     <tr>
-                      <td colSpan={8} style={{ padding: 16, color: "#666" }}>
-                        Please select a Year first.
+                      <td colSpan={5 + yearCols.length + 2} className="rs-rowMsg">
+                        Select Department and Program.
                       </td>
                     </tr>
                   ) : loading ? (
                     <tr>
-                      <td colSpan={8} style={{ padding: 16 }}>
+                      <td colSpan={5 + yearCols.length + 2} className="rs-rowMsg">
                         Loading...
                       </td>
                     </tr>
-                  ) : shownBooks.length === 0 ? (
+                  ) : summary.length === 0 ? (
                     <tr>
-                      <td colSpan={8} style={{ padding: 16 }}>
-                        No acquired books found for this filter.
+                      <td colSpan={5 + yearCols.length + 2} className="rs-rowMsg">
+                        No data found.
                       </td>
                     </tr>
                   ) : (
-                    shownBooks.map((b) => (
-                      <tr key={b.id}>
-                        <td>{b.id}</td>
-                        <td>{b.Title}</td>
-                        <td>{b.Author}</td>
-                        <td>{b.Course_code}</td>
-                        <td>{b.Publisher}</td>
-                        <td>{b.Year}</td>
-                        <td>{b.Course_code}</td>
-                        <td>{b.Edition}</td>
+                    summary.map((r) => (
+                      <tr key={r.course_code}>
+                        <td className="rs-left">{r.course_code}</td>
+                        <td className="rs-left">{r.course_title}</td>
+                        <td>{r.total_titles}</td>
+                        <td>{r.total_vols}</td>
+                        <td>{r.arc}</td>
+
+                        {yearCols.map((y) => (
+                          <td key={y}>{r.perYear[y] ?? 0}</td>
+                        ))}
+
+                        <td>{r.withinLast5}</td>
+                        <td>{r.neededTitles}</td>
                       </tr>
                     ))
                   )}
                 </tbody>
               </table>
+            </div>
+
+            <div className="rs-footnote">
+              Showing publish year (copyright_year). Columns include current year + past 5 years; older titles go to ARC.
             </div>
           </section>
         </main>

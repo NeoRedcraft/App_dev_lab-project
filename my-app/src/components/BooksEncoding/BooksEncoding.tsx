@@ -1,7 +1,307 @@
 import "./BooksEncoding.css";
 import { supabase } from "../../database/client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
+
+type CourseRow = {
+  id: number;
+  department: string | null;
+  program: string | null;
+  course_code: string | null;
+  course_title: string | null;
+};
+
+type BookInsert = {
+  source_key: string;
+  acc_no: string | null;
+  call_no: string | null;
+  title: string;
+  author: string | null;
+  publisher: string | null;
+  copyright_year: number | null;
+  num_vols: number | null;
+  isbn: string | null;
+  supplier: string | null;
+  year_purchase: number | null;
+  apa_citation: string | null;
+};
+
+type FormState = {
+  title: string;
+  author: string;
+  department: string;
+  program: string;
+  course_code: string;
+  publisher: string;
+  year: string; 
+  year_purchase: string;
+  num_vols: string;
+  acc_no: string;
+  call_no: string;
+  isbn: string;
+  supplier: string;
+  apa_citation: string;
+};
+
+const DEFAULT_FORM: FormState = {
+  title: "",
+  author: "",
+  department: "",
+  program: "",
+  course_code: "",
+  publisher: "",
+  year: "",
+  year_purchase: "",
+  num_vols: "",
+  acc_no: "",
+  call_no: "",
+  isbn: "",
+  supplier: "",
+  apa_citation: "",
+};
+
+function trimOrNull(s: string) {
+  const t = s.trim();
+  return t ? t : null;
+}
+
+function toIntOrNull(s: string) {
+  const t = s.trim();
+  if (!t) return null;
+  const n = parseInt(t, 10);
+  return Number.isFinite(n) ? n : null;
+}
+
+function coalesceGeneral(s: string) {
+  const t = s.trim();
+  return t ? t : "General";
+}
+
+function makeSourceKey() {
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `MANUAL-${Date.now()}-${rand}`;
+}
+
+async function getOrCreateCourseId(dept: string, prog: string, code: string) {
+  const { data: existingCourse, error: findErr } = await supabase
+    .from("library_courses")
+    .select("id, department, program, course_code, course_title")
+    .eq("department", dept)
+    .eq("program", prog)
+    .eq("course_code", code)
+    .maybeSingle<CourseRow>();
+
+  if (findErr) throw findErr;
+  if (existingCourse?.id) return existingCourse.id;
+
+  const { data: newCourse, error: insCourseErr } = await supabase
+    .from("library_courses")
+    .insert([{ department: dept, program: prog, course_code: code, course_title: null }])
+    .select("id")
+    .single();
+
+  if (insCourseErr) throw insCourseErr;
+  return newCourse.id as number;
+}
+
+async function insertBookAndLink(courseId: number, payload: BookInsert) {
+  const { data: bookRow, error: bookErr } = await supabase
+    .from("library_books")
+    .insert([payload])
+    .select("id")
+    .single();
+
+  if (bookErr) throw bookErr;
+
+  const { error: linkErr } = await supabase
+    .from("library_book_courses")
+    .insert([{ book_id: bookRow.id, course_id: courseId }]);
+
+  if (linkErr) throw linkErr;
+
+  return bookRow.id as number;
+}
+
+function BookEncodingModal(props: {
+  loading: boolean;
+  formData: FormState;
+  setFormData: React.Dispatch<React.SetStateAction<FormState>>;
+  onClose: () => void;
+  onSubmit: (e: React.FormEvent) => void;
+}) {
+  const { loading, formData, setFormData, onClose, onSubmit } = props;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((p) => ({ ...p, [name]: value }));
+  };
+
+  return (
+    <div className="be-overlay" onClick={onClose}>
+      <div className="be-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="be-close" onClick={onClose} aria-label="Close">
+          x
+        </button>
+
+        <h2 className="be-title-modal">Book Encoding</h2>
+
+        <form className="be-form-modal" onSubmit={onSubmit}>
+          <div className="be-col">
+            <div className="be-field">
+              <label className="be-label-modal">Book Title</label>
+              <input
+                className="be-input-modal"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="be-field">
+              <label className="be-label-modal">Author</label>
+              <input
+                className="be-input-modal"
+                name="author"
+                value={formData.author}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="be-field">
+              <label className="be-label-modal">Department</label>
+              <input
+                className="be-input-modal"
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                placeholder="(blank = General)"
+              />
+            </div>
+
+            <div className="be-field">
+              <label className="be-label-modal">Program</label>
+              <input
+                className="be-input-modal"
+                name="program"
+                value={formData.program}
+                onChange={handleChange}
+                placeholder="(blank = General)"
+              />
+            </div>
+
+            <div className="be-field">
+              <label className="be-label-modal">Course Code</label>
+              <input
+                className="be-input-modal"
+                name="course_code"
+                value={formData.course_code}
+                onChange={handleChange}
+                placeholder="(blank = General)"
+              />
+            </div>
+
+            <div className="be-field">
+              <label className="be-label-modal">Publisher</label>
+              <input
+                className="be-input-modal"
+                name="publisher"
+                value={formData.publisher}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="be-field">
+              <label className="be-label-modal">Year (Copyright)</label>
+              <input
+                className="be-input-modal"
+                name="year"
+                value={formData.year}
+                onChange={handleChange}
+                placeholder="e.g., 2024"
+              />
+            </div>
+          </div>
+
+          <div className="be-col">
+            <div className="be-field">
+              <label className="be-label-modal">Year Purchase</label>
+              <input
+                className="be-input-modal"
+                name="year_purchase"
+                value={formData.year_purchase}
+                onChange={handleChange}
+                placeholder="e.g., 2025"
+              />
+            </div>
+
+            <div className="be-field">
+              <label className="be-label-modal">Number of Volumes</label>
+              <input
+                className="be-input-modal"
+                name="num_vols"
+                value={formData.num_vols}
+                onChange={handleChange}
+                placeholder="e.g., 1"
+              />
+            </div>
+
+            <div className="be-field">
+              <label className="be-label-modal">Acc. Number</label>
+              <input
+                className="be-input-modal"
+                name="acc_no"
+                value={formData.acc_no}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="be-field">
+              <label className="be-label-modal">Call Number</label>
+              <input
+                className="be-input-modal"
+                name="call_no"
+                value={formData.call_no}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="be-field">
+              <label className="be-label-modal">ISBN</label>
+              <input className="be-input-modal" name="isbn" value={formData.isbn} onChange={handleChange} />
+            </div>
+
+            <div className="be-field">
+              <label className="be-label-modal">Supplier</label>
+              <input
+                className="be-input-modal"
+                name="supplier"
+                value={formData.supplier}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="be-field">
+              <label className="be-label-modal">APA Citation</label>
+              <input
+                className="be-input-modal"
+                name="apa_citation"
+                value={formData.apa_citation}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+
+          <div className="be-actions">
+            <button className="be-submit-modal" type="submit" disabled={loading}>
+              {loading ? "Logging..." : "Log Books"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 const BooksEncoding = () => {
   const navigate = useNavigate();
@@ -10,21 +310,16 @@ const BooksEncoding = () => {
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [formData, setFormData] = useState({
-    Title: "",
-    Author: "",
-    Department: "",
-    Program: "",
-    Course_code: "",
-    Publisher: "",
-    Year: "",
-    Edition: "",
-  });
+  const [formData, setFormData] = useState<FormState>(DEFAULT_FORM);
+
+  const resetForm = () => setFormData(DEFAULT_FORM);
+
+  const fromPath = useMemo(() => (location.state as any)?.from as string | undefined, [location.state]);
 
   const closeAndReturn = () => {
-    const from = (location.state as any)?.from;
     setIsModalOpen(false);
-    if (from) navigate(from, { replace: true });
+    resetForm();
+    if (fromPath) navigate(fromPath, { replace: true });
   };
 
   useEffect(() => {
@@ -35,20 +330,19 @@ const BooksEncoding = () => {
   }, [location.state]);
 
   useEffect(() => {
+    if (!isModalOpen) return;
+
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") closeAndReturn();
     };
-    if (isModalOpen) window.addEventListener("keydown", onKeyDown);
+
+    window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isModalOpen]);
+  }, [isModalOpen, fromPath]);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.log("Error logging out:", error.message);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -56,24 +350,36 @@ const BooksEncoding = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.from("books").insert([formData]);
-      if (error) throw error;
+      const dept = coalesceGeneral(formData.department);
+      const prog = coalesceGeneral(formData.program);
+      const code = coalesceGeneral(formData.course_code);
+
+      const bookTitle = formData.title.trim();
+      if (!bookTitle) throw new Error("Book Title is required.");
+
+      const courseId = await getOrCreateCourseId(dept, prog, code);
+
+      const payload: BookInsert = {
+        source_key: makeSourceKey(),
+        acc_no: trimOrNull(formData.acc_no),
+        call_no: trimOrNull(formData.call_no),
+        title: bookTitle,
+        author: trimOrNull(formData.author),
+        publisher: trimOrNull(formData.publisher),
+        copyright_year: toIntOrNull(formData.year),
+        num_vols: toIntOrNull(formData.num_vols),
+        isbn: trimOrNull(formData.isbn),
+        supplier: trimOrNull(formData.supplier),
+        year_purchase: toIntOrNull(formData.year_purchase),
+        apa_citation: trimOrNull(formData.apa_citation),
+      };
+
+      await insertBookAndLink(courseId, payload);
 
       alert("Book added successfully!");
-      setFormData({
-        Title: "",
-        Author: "",
-        Department: "",
-        Program: "",
-        Course_code: "",
-        Publisher: "",
-        Year: "",
-        Edition: "",
-      });
-
       closeAndReturn();
-    } catch (error: any) {
-      alert("Error adding book: " + error.message);
+    } catch (err: any) {
+      alert("Error adding book: " + (err?.message || err));
     } finally {
       setLoading(false);
     }
@@ -81,13 +387,11 @@ const BooksEncoding = () => {
 
   return (
     <div className="pc-page">
-      {/* TOP BAR */}
       <header className="pc-topbar">
         <img className="pc-toplogo" src="/images/logo2.webp" alt="MAPUA LIBRARY" />
       </header>
 
       <div className="pc-body">
-        {/* SIDEBAR */}
         <aside className="pc-sidebar">
           <nav className="pc-nav">
             <NavLink to="/dashboard">Dashboard</NavLink>
@@ -105,7 +409,6 @@ const BooksEncoding = () => {
           </button>
         </aside>
 
-        {/* MAIN */}
         <main className="pc-main">
           <div className="pc-main-head">
             <h1 className="pc-title">Books Encoding</h1>
@@ -126,45 +429,14 @@ const BooksEncoding = () => {
         </main>
       </div>
 
-      {/* MODAL */}
       {isModalOpen && (
-        <div className="be-overlay" onClick={closeAndReturn}>
-          <div className="be-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="be-close" onClick={closeAndReturn}>
-              x
-            </button>
-
-            <h2 className="be-title-modal">Book Encoding</h2>
-
-            <form className="be-form-modal" onSubmit={handleAdd}>
-              {[
-                ["Title", "Book Title"],
-                ["Author", "Author"],
-                ["Department", "Department"],
-                ["Program", "Program"],
-                ["Course_code", "Course Code"],
-                ["Publisher", "Publisher"],
-                ["Year", "Year"],
-                ["Edition", "Edition"],
-              ].map(([name, label]) => (
-                <div key={name}>
-                  <label className="be-label-modal">{label}</label>
-                  <input
-                    className="be-input-modal"
-                    name={name}
-                    value={(formData as any)[name]}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-              ))}
-
-              <button className="be-submit-modal" type="submit" disabled={loading}>
-                {loading ? "Logging..." : "Log Books"}
-              </button>
-            </form>
-          </div>
-        </div>
+        <BookEncodingModal
+          loading={loading}
+          formData={formData}
+          setFormData={setFormData}
+          onClose={closeAndReturn}
+          onSubmit={handleAdd}
+        />
       )}
     </div>
   );
