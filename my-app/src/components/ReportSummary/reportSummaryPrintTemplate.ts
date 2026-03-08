@@ -41,14 +41,15 @@ export function buildReportSummaryPrintHtml(args: {
 
     table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 
-    /* sizing: feel free to adjust */
-    th:nth-child(1), td:nth-child(1) { width: 110px; }   /* COURSE CODE */
-    th:nth-child(2), td:nth-child(2) { width: 360px; }   /* COURSE TITLE bigger */
-    th:nth-child(3), td:nth-child(3) { width: 110px; }   /* TOTAL TITLES */
-    th:nth-child(4), td:nth-child(4) { width: 110px; }   /* TOTAL VOLS */
-    th:nth-child(5), td:nth-child(5) { width: 70px; }    /* ARC */
+    /* sizing: using percentages to avoid squishing the rightmost columns */
+    th:nth-child(1), td:nth-child(1) { width: 8%; }    /* COURSE CODE */
+    th:nth-child(2), td:nth-child(2) { width: 22%; }   /* COURSE TITLE bigger */
+    th:nth-child(3), td:nth-child(3) { width: 7%; }    /* TOTAL TITLES */
+    th:nth-child(4), td:nth-child(4) { width: 7%; }    /* TOTAL VOLS */
+    th:nth-child(5), td:nth-child(5) { width: 5%; }    /* ARC */
+    /* Let the other columns distribute the rest (51%) */
 
-    th, td { border: 1px solid #000; padding: 6px 8px; font-size: 11px; }
+    th, td { border: 1px solid #000; padding: 4px; font-size: 10px; word-break: break-word; }
     th { text-align: center; font-weight: 700; }
     td { text-align: center; }
 
@@ -57,7 +58,10 @@ export function buildReportSummaryPrintHtml(args: {
     .th-yellow { background: #ffe04d; }
     .left { text-align: left; }
 
-    @media print { body { padding: 0; } }
+    @media print { 
+      @page { size: landscape; margin: 0; }
+      body { padding: 18px; } 
+    }
   </style>
 </head>
 <body>
@@ -80,14 +84,13 @@ export function buildReportSummaryPrintHtml(args: {
     </thead>
 
     <tbody>
-      ${
-        summary.length === 0
-          ? `<tr><td colspan="${5 + yearCols.length + 2}" style="text-align:center;padding:14px;">No data.</td></tr>`
-          : summary
-              .map((r) => {
-                const yearCells = yearCols.map((y) => `<td>${r.perYear[y] ?? 0}</td>`).join("");
+      ${summary.length === 0
+      ? `<tr><td colspan="${5 + yearCols.length + 2}" style="text-align:center;padding:14px;">No data.</td></tr>`
+      : summary
+        .map((r) => {
+          const yearCells = yearCols.map((y) => `<td>${r.perYear[y] ?? 0}</td>`).join("");
 
-                return `
+          return `
 <tr>
   <td class="left">${escapeHtml(r.course_code)}</td>
   <td class="left">${escapeHtml(r.course_title || "")}</td>
@@ -98,9 +101,9 @@ export function buildReportSummaryPrintHtml(args: {
   <td>${r.withinLast5}</td>
   <td>${r.neededTitles}</td>
 </tr>`;
-              })
-              .join("")
-      }
+        })
+        .join("")
+    }
     </tbody>
   </table>
 
