@@ -56,21 +56,19 @@ export function buildCoursePrintHtml(header: string, rows: PrintRow[]) {
       </tr>
     </thead>
     <tbody>
-      ${
-        rows.length === 0
-          ? `<tr><td colspan="8" style="text-align:center;padding:14px;">No records.</td></tr>`
-          : rows
-              .map((b) => {
-                const sn = (b.acc_no ?? b.book_id.toString()) || "";
-                const author = b.author ?? "";
-                const title = b.title ?? "";
-                const publisher = b.publisher ?? "";
-                const year = b.copyright_year?.toString() ?? "";
-                const call = b.call_no ?? "";
-                const vols = b.num_vols?.toString() ?? "";
-                const acc = b.acc_no ?? "";
+      ${rows.length === 0
+      ? `<tr><td colspan="8" style="text-align:center;padding:14px;">No records.</td></tr>`
+      : rows
+        .map((b) => {
+          const sn = (b.acc_no ?? b.book_id.toString()) || "";
+          const author = b.author ?? "";
+          const title = b.title ?? "";
+          const publisher = b.publisher ?? "";
+          const year = b.copyright_year?.toString() ?? "";
+          const call = b.call_no ?? "";
+          const vols = b.num_vols?.toString() ?? "";
 
-                return `
+          return `
                   <tr>
                     <td class="col-sn">${escapeHtml(sn)}</td>
                     <td class="col-author">${escapeHtml(author)}</td>
@@ -81,9 +79,9 @@ export function buildCoursePrintHtml(header: string, rows: PrintRow[]) {
                     <td class="col-vols">${escapeHtml(vols)}</td>
                   </tr>
                 `;
-              })
-              .join("")
-      }
+        })
+        .join("")
+    }
     </tbody>
   </table>
 

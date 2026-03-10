@@ -1,7 +1,8 @@
 import "./BooksEncoding.css";
 import { supabase } from "../../database/client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import * as XLSX from "xlsx";
 
 type CourseRow = {
   id: number;
@@ -33,7 +34,7 @@ type FormState = {
   program: string;
   course_code: string;
   publisher: string;
-  year: string; 
+  year: string;
   year_purchase: string;
   num_vols: string;
   acc_no: string;
@@ -124,12 +125,94 @@ async function insertBookAndLink(courseId: number, payload: BookInsert) {
 
 function BookEncodingModal(props: {
   loading: boolean;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   formData: FormState;
   setFormData: React.Dispatch<React.SetStateAction<FormState>>;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
 }) {
-  const { loading, formData, setFormData, onClose, onSubmit } = props;
+  const { loading, setLoading, formData, setFormData, onClose, onSubmit } = props;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const REQUIRED_HEADERS = [
+    "Book Title", "Year Purchase", "Author", "Number of Volumes",
+    "Department", "Acc. Number", "Program", "Call Number",
+    "Course Code", "ISBN", "Publisher", "Supplier",
+    "Year (Copyright)", "APA Citation"
+  ];
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    e.target.value = ""; // reset input
+
+    const fileName = file.name.toLowerCase();
+    if (!fileName.endsWith(".xlsx") && !fileName.endsWith(".xls") && !fileName.endsWith(".csv")) {
+      alert("File imported is not an Excel file");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array" });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+
+      const headers = XLSX.utils.sheet_to_json<string[]>(worksheet, { header: 1 })[0] || [];
+
+      if (
+        headers.length !== REQUIRED_HEADERS.length ||
+        !REQUIRED_HEADERS.every(h => headers.includes(h as any))
+      ) {
+        alert("Excel file imported is incorrect");
+        setLoading(false);
+        return;
+      }
+
+      const data = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet);
+
+      for (const row of data) {
+        const title = trimOrNull(String(row["Book Title"] || ""));
+        if (!title) continue; // Skip rows without a book title
+
+        const dept = coalesceGeneral(String(row["Department"] || ""));
+        const prog = coalesceGeneral(String(row["Program"] || ""));
+        const code = coalesceGeneral(String(row["Course Code"] || ""));
+
+        const courseId = await getOrCreateCourseId(dept, prog, code);
+
+        const payload: BookInsert = {
+          source_key: makeSourceKey(),
+          acc_no: trimOrNull(String(row["Acc. Number"] || "")),
+          call_no: trimOrNull(String(row["Call Number"] || "")),
+          title: title,
+          author: trimOrNull(String(row["Author"] || "")),
+          publisher: trimOrNull(String(row["Publisher"] || "")),
+          copyright_year: toIntOrNull(String(row["Year (Copyright)"] || "")),
+          num_vols: toIntOrNull(String(row["Number of Volumes"] || "")),
+          isbn: trimOrNull(String(row["ISBN"] || "")),
+          supplier: trimOrNull(String(row["Supplier"] || "")),
+          year_purchase: toIntOrNull(String(row["Year Purchase"] || "")),
+          apa_citation: trimOrNull(String(row["APA Citation"] || "")),
+        };
+
+        await insertBookAndLink(courseId, payload);
+      }
+
+      alert("Books imported successfully!");
+      onClose();
+    } catch (err: any) {
+      alert("Error importing books: " + (err?.message || err));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -293,6 +376,22 @@ function BookEncodingModal(props: {
           </div>
 
           <div className="be-actions">
+            <input
+              type="file"
+              accept=".xlsx, .xls, .csv"
+              style={{ display: "none" }}
+              ref={fileInputRef}
+              onChange={handleFileChange}
+            />
+            <button
+              className="be-submit-modal"
+              type="button"
+              onClick={handleImportClick}
+              disabled={loading}
+              style={{ marginRight: "10px" }}
+            >
+              Import Excel
+            </button>
             <button className="be-submit-modal" type="submit" disabled={loading}>
               {loading ? "Logging..." : "Log Books"}
             </button>
@@ -432,6 +531,7 @@ const BooksEncoding = () => {
       {isModalOpen && (
         <BookEncodingModal
           loading={loading}
+          setLoading={setLoading}
           formData={formData}
           setFormData={setFormData}
           onClose={closeAndReturn}
