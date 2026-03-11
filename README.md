@@ -15,8 +15,11 @@ This project is a React-based web application initialized with Vite, using Supab
 ### `App_dev_lab-project` (Root)
 - **README.md**: Contains the list of contributors and this project overview.
 - **proj-docs/**: Documentation directory.
-  - `usertesting_securitylogin.md`: Detailed guide on user testing, Supabase integration, and security features.
+  - `component_documentation.md`: Developer‑oriented breakdown of each React component.
+  - `docker_guide.md`: Instructions for containerizing and running the app with Docker.
   - `debugging_empty_page_analysis.md` : Documented on resolving a runtime crash from a mismatched env name.
+  - `usertesting_securitylogin.md`: Detailed guide on user testing, Supabase integration, and security features.
+  - `User_Manual.md`: End‑user guide covering setup, login, and feature walkthroughs.
 
 ### `my-app` (Frontend Application)
 This is the main directory for the React application.
