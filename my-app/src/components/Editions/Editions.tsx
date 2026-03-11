@@ -3,6 +3,14 @@ import { supabase } from "../../database/client";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 
+const IconSearch = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+);
+
 type ViewRow = {
   department: string | null;
   program: string | null;
@@ -231,13 +239,13 @@ const Editions = () => {
 
             <div className="pc-head-right">
               <div className="pc-search">
+                <span className="pc-search-ic"><IconSearch /></span>
                 <input
                   type="text"
-                  placeholder="Search Book"
+                  placeholder="Search book or author..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
-                <span className="pc-search-ic">🔍</span>
               </div>
 
               <button
@@ -275,7 +283,9 @@ const Editions = () => {
                     </option>
                   ))}
                 </select>
-                <span className="pc-caret">⌄</span>
+                <span className="pc-caret">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </span>
               </div>
 
               <label className="pc-label">Program</label>
@@ -296,7 +306,9 @@ const Editions = () => {
                     </option>
                   ))}
                 </select>
-                <span className="pc-caret">⌄</span>
+                <span className="pc-caret">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </span>
               </div>
 
               <div className="pc-bigBox">
@@ -329,7 +341,7 @@ const Editions = () => {
             <div className="pc-rightCard">
               <div className="pc-tableTop">
                 <div className="pc-tableTitle">
-                  ({selectedCourseCode || "Course Code"}) Library
+                  {selectedCourseCode || "Course Code"} Library
                 </div>
 
                 <button className="pc-sort" type="button" disabled>
@@ -376,14 +388,21 @@ const Editions = () => {
                           <td>{b.title}</td>
                           <td>{b.author}</td>
                           <td className="pc-center">{b.copyright_year ?? ""}</td>
-                          <td className="pc-center">{getStatus(b.copyright_year)}</td>
                           <td className="pc-center">
-                             <button
-                                type="button"
-                                onClick={() => navigate(`/editing/${b.book_id}`, { state: { from: location.pathname } })}
-                              >
-                                Edit
-                              </button>
+                            {getStatus(b.copyright_year) === "LATEST EDITION"
+                              ? <span className="pc-status-latest">Latest Edition</span>
+                              : getStatus(b.copyright_year) === "OUTDATED"
+                              ? <span className="pc-status-outdated">Outdated</span>
+                              : <span className="pc-status-unknown">—</span>}
+                          </td>
+                          <td className="pc-center">
+                            <button
+                              type="button"
+                              className="pc-editbtn"
+                              onClick={() => navigate(`/editing/${b.book_id}`, { state: { from: location.pathname } })}
+                            >
+                              Edit
+                            </button>
                           </td>
                         </tr>
                       ))

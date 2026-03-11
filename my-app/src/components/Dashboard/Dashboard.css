@@ -224,13 +224,13 @@ body {
 }
 
 /* ── Actions ── */
-.dash-actions {
+.dash-head-right {
   display: flex;
-  justify-content: flex-end;
-  margin-top: -10px;
+  align-items: center;
+  gap: 10px;
 }
 
-.dash-logbtn {
+.pc-logbtn {
   height: 36px;
   padding: 0 18px;
   border-radius: 10px;
@@ -244,7 +244,7 @@ body {
   transition: background 0.18s, border-color 0.18s;
 }
 
-.dash-logbtn:hover {
+.pc-logbtn:hover {
   background: #7a0000;
   border-color: #7a0000;
 }

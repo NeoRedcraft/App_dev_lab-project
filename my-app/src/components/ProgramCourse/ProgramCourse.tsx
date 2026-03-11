@@ -2,6 +2,14 @@ import "./ProgramCourse.css";
 import { supabase } from "../../database/client";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
+
+const IconSearch = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+);
 import { buildCoursePrintHtml } from "./coursePrintTemplate";
 
 export type ViewRow = {
@@ -55,7 +63,9 @@ function SelectField(props: {
             </option>
           ))}
         </select>
-        <span className="pc-caret">⌄</span>
+        <span className="pc-caret">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </span>
       </div>
     </>
   );
@@ -329,27 +339,16 @@ const ProgramCourse = () => {
         <main className="pc-main">
           <div className="pc-main-head">
             <h1 className="pc-title">Program &amp; Course view</h1>
-
             <div className="pc-head-right">
               <div className="pc-search">
+                <span className="pc-search-ic"><IconSearch /></span>
                 <input
                   type="text"
-                  placeholder="Search Book"
+                  placeholder="Search book, author, call no..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
-                <span className="pc-search-ic">🔍</span>
               </div>
-
-              <button
-                type="button"
-                className="pc-printbtn"
-                disabled={!selectedCourseCode}
-                onClick={printCourseLibrary}
-              >
-                Print
-              </button>
-
               <button
                 type="button"
                 className="pc-logbtn"
@@ -412,7 +411,14 @@ const ProgramCourse = () => {
             <div className="pc-rightCard">
               <div className="pc-tableTop">
                 <div className="pc-tableTitle">{selectedCourseCode || "Course Code"} Library</div>
-
+                <button
+                  type="button"
+                  className="pc-printbtn"
+                  disabled={!selectedCourseCode}
+                  onClick={printCourseLibrary}
+                >
+                  Print
+                </button>
               </div>
 
               <div className="pc-tableWrap">
