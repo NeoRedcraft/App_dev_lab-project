@@ -4,6 +4,14 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { buildReportSummaryPrintHtml, type SummaryRow as PrintSummaryRow } from "./reportSummaryPrintTemplate";
 
+const IconSearch = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+);
+
 type ViewRow = {
   department: string | null;
   program: string | null;
@@ -312,21 +320,17 @@ const ReportSummary = () => {
 
         <main className="pc-main">
           <div className="pc-main-head">
-            <div className="rs-headLeft">
-              <h1 className="pc-title">Report Summary</h1>
-
-              <div className="pc-search rs-search">
+            <h1 className="pc-title">Report Summary</h1>
+            <div className="pc-head-right">
+              <div className="pc-search">
+                <span className="pc-search-ic"><IconSearch /></span>
                 <input
                   type="text"
-                  placeholder="Search Course"
+                  placeholder="Search course code or title..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
-                <span className="pc-search-ic">🔍</span>
               </div>
-            </div>
-
-            <div className="pc-head-right">
               <button
                 type="button"
                 className="pc-logbtn"
@@ -357,7 +361,9 @@ const ReportSummary = () => {
                       </option>
                     ))}
                   </select>
-                  <span className="rs-caret">⌄</span>
+                  <span className="rs-caret">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </span>
                 </div>
 
                 <div className="rs-selectWrap">
@@ -374,7 +380,9 @@ const ReportSummary = () => {
                       </option>
                     ))}
                   </select>
-                  <span className="rs-caret">⌄</span>
+                  <span className="rs-caret">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </span>
                 </div>
               </div>
 
