@@ -1,60 +1,115 @@
-# Contributors:
-* Felipe M. Panugan III - NeoRedcraft
-* Nicholas Rian D. Pastiu - yikkN
-* Karrin Frida Novero - Rin1803
-* Dwayne Umali - RDwayneUmali
-* Jacob Shen Riesgo - JacobShenRiesgo
+# 📘 App Dev Lab Project — Repository Overview
 
+A **React + Vite** web application for librarians to monitor and manage new book acquisition records, backed by **Supabase** for authentication and data storage.
 
-# Project Structure Overview
+---
 
-This project is a React-based web application initialized with Vite, using Supabase for authentication.
+## 👥 Contributors
 
-## File and Folder Breakdown
+| Name | GitHub |
+|---|---|
+| Felipe M. Panugan III | NeoRedcraft |
+| Nicholas Rian D. Pastiu | yikkN |
+| Karrin Frida Novero | Rin1803 |
+| Dwayne Umali | RDwayneUmali |
+| Jacob Shen Riesgo | JacobShenRiesgo |
 
-### `App_dev_lab-project` (Root)
-- **README.md**: Contains the list of contributors and this project overview.
-- **proj-docs/**: Documentation directory.
-  - `component_documentation.md`: Developer‑oriented breakdown of each React component.
-  - `docker_guide.md`: Instructions for containerizing and running the app with Docker.
-  - `debugging_empty_page_analysis.md` : Documented on resolving a runtime crash from a mismatched env name.
-  - `usertesting_securitylogin.md`: Detailed guide on user testing, Supabase integration, and security features.
-  - `User_Manual.md`: End‑user guide covering setup, login, and feature walkthroughs.
+---
 
-### `my-app` (Frontend Application)
-This is the main directory for the React application.
-- **package.json**: Manages project dependencies (React, Supabase client, etc.) and scripts (`npm run dev`).
-- **vite.config.ts**: Configuration for the Vite build tool.
-- **.gitignore**: Specifies which files Git should ignore (e.g., `node_modules`, `.env`).
-- **index.html**: The main entry point HTML file.
+## 📄 File Description:
 
-#### `src/` (Source Code)
-- **main.tsx**: The entry point for React. It finds the root element in `index.html` and renders the `App`.
-- **App.tsx**: The root component. It currently handles rendering the `LoginPage` and performs high‑level routing once the user is authenticated.
-- **components/**: Contains modular React components grouped by feature. Each folder typically contains a `.tsx` view, a `.css` stylesheet, and any helper files.
-  - **Login/**: Self-contained login module.
-    - `LoginPage.tsx`: The UI and logic for the login form, including field validation and Supabase authentication flows (sign‑in, sign‑out, error handling).
-    - `Login.css`: Dedicated styles for form layout and responsive behaviour.
-    - `supabaseClient.ts`: Exports the configured Supabase client used across the app.
-  - **Dashboard/**: Main hub shown after successful login.
-    - `Dashboard.tsx`: Displays navigation links to the other sections (Editing, Editions, ProgramCourse, ReportSummary, BooksEncoding) and may show user info.
-    - `Dashboard.css`: Styling for dashboard panels, cards, and responsive grid.
-  - **Editing/**: Interfaces for modifying existing records.
-    - `Editing.tsx`: Form-driven component allowing users to edit entries stored in the backend (e.g. course data, report items). Includes form validation and submit handlers.
-    - `Editing.css`: Styles for the form layout and error messages.
-  - **Editions/**: Lists or manages different editions (e.g. academic years, publication versions).
-    - `Editions.tsx`: Presents a table or list of editions, with controls for filtering/searching and, optionally, creating new entries.
-    - `Edition.css`: Styling used by `Editions.tsx` to style list rows, headers, and pagination.
-  - **ProgramCourse/**: Handles the program/course information display and print templates.
-    - `ProgramCourse.tsx`: Renders course/program details; used both for on‑screen viewing and as a basis for printable output.
-    - `ProgramCourse.css`: Styles specific to card layouts and print‑friendly formatting.
-    - `coursePrintTemplate.ts`: Utility that generates an HTML template or styled content suitable for printing the course information.
-  - **ReportSummary/**: Generates summaries for reports.
-    - `ReportSummary.tsx`: Collects input criteria, displays generated summary data, and includes print/export options.
-    - `ReportSummary.css`: Styles for summary tables, charts, and print views.
-    - `reportSummaryPrintTemplate.ts`: Generates a print‑ready template for the report summary.
-  - **BooksEncoding/**: Auxiliary component for encoding book or resource data.
-    - `BooksEncoding.tsx`: Provides inputs and logic to transform or encode book identifiers, possibly for bulk upload or export.
-    - `BooksEncoding.css`: Styles the encoding tool’s UI controls.
+<pre>
+📂 App_dev_lab-project/ (Root)
+├── 📄 README.md
+│     ↳ Lists contributors and provides a high-level project overview
+├── 📄 package-lock.json
+│     ↳ Auto-generated lockfile ensuring consistent dependency versions across installs
+├── 📁 .vscode/
+│     ↳ Editor settings for VS Code (workspace-specific configs)
+├── 📁 proj-docs/
+│     ↳ All project documentation in one place
+│     ├── 📄 component_documentation.md
+│     │     ↳ Developer-oriented breakdown of each React component
+│     ├── 📄 docker_guide.md
+│     │     ↳ Instructions for containerizing and running the app with Docker
+│     ├── 📄 debugging_empty_page_analysis.md
+│     │     ↳ Documents the resolution of a runtime crash caused by a mismatched env variable name
+│     ├── 📄 usertesting_securitylogin.md
+│     │     ↳ Guide covering user testing, Supabase integration, and security features
+│     └── 📄 User_Manual.md
+│           ↳ End-user guide covering setup, login, and feature walkthroughs
+└── 📁 my-app/ (Frontend Application)
+      ↳ The main React application directory
+      ├── 📄 package.json
+      │     ↳ Manages dependencies (React, Supabase client, etc.) and npm scripts
+      ├── 📄 vite.config.ts
+      │     ↳ Configuration file for the Vite build tool
+      ├── 📄 .gitignore
+      │     ↳ Tells Git to ignore files like node_modules and .env
+      ├── 📄 index.html
+      │     ↳ The root HTML entry point that loads the React app
+      └── 📁 src/ (Source Code)
+            ├── 📄 main.tsx
+            │     ↳ React entry point — mounts the App component into index.html
+            ├── 📄 App.tsx
+            │     ↳ Root component handling top-level routing and login state
+            └── 📁 components/ (Feature Modules)
+                  ├── 📁 Login/
+                  │     ↳ Self-contained login module
+                  │     ├── LoginPage.tsx     — Login form UI with Supabase auth logic
+                  │     ├── Login.css         — Form layout and responsive styles
+                  │     └── supabaseClient.ts — Exports the configured Supabase client
+                  ├── 📁 Dashboard/
+                  │     ↳ Main hub shown after a successful login
+                  │     ├── Dashboard.tsx     — Navigation links to all major sections
+                  │     └── Dashboard.css     — Styles for panels, cards, and grid layout
+                  ├── 📁 Editing/
+                  │     ↳ Interfaces for modifying existing records
+                  │     ├── Editing.tsx       — Form-driven component for editing backend entries
+                  │     └── Editing.css       — Styles for form layout and error messages
+                  ├── 📁 Editions/
+                  │     ↳ Lists and manages different editions (e.g. academic years)
+                  │     ├── Editions.tsx      — Table/list view with filter and search controls
+                  │     └── Edition.css       — Styles for list rows, headers, and pagination
+                  ├── 📁 ProgramCourse/
+                  │     ↳ Handles program/course display and print templates
+                  │     ├── ProgramCourse.tsx         — Renders course details for screen and print
+                  │     ├── ProgramCourse.css         — Card layouts and print-friendly formatting
+                  │     └── coursePrintTemplate.ts    — Generates a print-ready HTML template for course info
+                  ├── 📁 ReportSummary/
+                  │     ↳ Generates and displays report summaries
+                  │     ├── ReportSummary.tsx              — Input criteria, summary display, and export options
+                  │     ├── ReportSummary.css              — Styles for summary tables, charts, and print views
+                  │     └── reportSummaryPrintTemplate.ts  — Generates a print-ready template for reports
+                  └── 📁 BooksEncoding/
+                        ↳ Tool for encoding and transforming book/resource data
+                        ├── BooksEncoding.tsx  — Inputs and logic for bulk encoding of book identifiers
+                        └── BooksEncoding.css  — Styles for the encoding tool's UI controls
+</pre>
 
-These components are assembled by the router inside `App.tsx` and communicate via shared services such as the Supabase client defined in `src/database/client.ts`.
+---
+
+## 🛠️ Tech Stack
+
+| Technology | Role |
+|---|---|
+| React + TypeScript | Frontend UI framework |
+| Vite | Build tool and dev server |
+| Supabase | Authentication and backend database |
+| CSS Modules | Component-scoped styling |
+| Docker | Optional containerized deployment |
+
+---
+
+## 🚀 Getting Started
+
+```bash
+# Install dependencies
+cd my-app
+npm install
+
+# Start the development server
+npm run dev
+```
+
+> Refer to `proj-docs/User_Manual.md` for full setup instructions, and `proj-docs/docker_guide.md` to run the app via Docker.
