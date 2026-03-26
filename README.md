@@ -1,4 +1,4 @@
-# 📘 App Dev Lab Project — Repository Overview
+# 📘 Library Monitoring Acquisitions System 
 
 A **React + Vite** web application for librarians to monitor and manage new book acquisition records, backed by **Supabase** for authentication and data storage.
 
