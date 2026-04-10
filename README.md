@@ -1,6 +1,6 @@
-# 📘 Library Monitoring Acquisitions System 
+# 📘 Mapúa Makati Library Acquisition Monitoring System (MAPUA-LAMS)
 
-A **React + Vite** web application for librarians to monitor and manage new book acquisition records, backed by **Supabase** for authentication and data storage.
+A **React + Vite** web application for librarians to monitor and manage new book acquisition records, backed by **Supabase** for authentication and data storage. A web-based Library Management Information System designed to streamline and centralize library acquisition processes by enabling functionalities such as book encoding with bibliographic details, course code association, acquisition lifecycle tracking, automated validation of inputs, edition monitoring for outdated materials, and advanced search, filtering, and report generation (e.g., weekly/monthly summaries and collection analytics). The system incorporates modules for user management (role-based access control), book catalog and inventory management, automated monitoring and notifications, and reporting/administration.
 
 ---
 
